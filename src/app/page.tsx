@@ -1,7 +1,6 @@
 "use client";
 
 import { User } from "@/types";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import Dashboard from "./_pages/Dashboard";
 import Matching from "./_pages/Matching";
@@ -36,10 +35,22 @@ export default function Home() {
 
   const handleUpdateUser = (updatedUser: User) => {
     setCurrentUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
-  const handleNavigate = (page: "dashboard" | "matching" | "profile") => {
+  const handleNavigate = (
+    page: "dashboard" | "matching" | "profile",
+    scrollTo: "top" | "bottom" = "top"
+  ) => {
     setCurrentPage(page);
+    if (scrollTo === "top") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   };
 
   return (
