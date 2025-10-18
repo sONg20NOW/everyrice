@@ -264,7 +264,7 @@ export default function Profile({
                       {currentUser.name}
                     </h2>
                     <p className="text-gray-600">
-                      {currentUser.department} {currentUser.year}학년
+                      {currentUser.department} {currentUser.grade}학년
                     </p>
                     <p className="text-gray-600">{currentUser.email}</p>
                     {currentUser.bio && (

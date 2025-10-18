@@ -9,7 +9,7 @@ export interface User {
   id: string;
   name: string;
   department: string;
-  year: number;
+  grade: number;
   email: string;
   bio?: string;
   avatar?: string;

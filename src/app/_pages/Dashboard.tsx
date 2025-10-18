@@ -271,7 +271,7 @@ export default function Dashboard({
               안녕하세요, {currentUser.name}님! 👋
             </h1>
             <p className="text-gray-600 mt-1">
-              {currentUser.department} {currentUser.year}학년
+              {currentUser.department} {currentUser.grade}학년
             </p>
           </div>
         </div>
