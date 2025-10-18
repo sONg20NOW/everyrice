@@ -7,6 +7,7 @@ import Dashboard from "./_pages/Dashboard";
 import Matching from "./_pages/Matching";
 import Profile from "./_pages/Profile";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 export default function Home() {
   const router = useRouter();
@@ -21,8 +22,11 @@ export default function Home() {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setCurrentUser(JSON.parse(savedUser));
+    } else {
+      toast.error("로그인이 필요합니다.");
+      router.push("/login");
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -37,11 +41,6 @@ export default function Home() {
   const handleNavigate = (page: "dashboard" | "matching" | "profile") => {
     setCurrentPage(page);
   };
-
-  if (!localStorage.getItem("user")) {
-    router.push("/login");
-    return;
-  }
 
   return (
     currentUser && (
