@@ -40,7 +40,10 @@ interface DashboardProps {
   currentUser: User;
   onLogout: () => void;
   onUpdateUser: (user: User) => void;
-  onNavigate: (page: "dashboard" | "matching" | "profile") => void;
+  onNavigate: (
+    page: "dashboard" | "matching" | "profile",
+    scrollTo?: "top" | "bottom"
+  ) => void;
 }
 
 interface MealType {
@@ -420,22 +423,16 @@ export default function Dashboard({
               <CardTitle className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2" />내 시간표
               </CardTitle>
-              <div className="flex space-x-2">
-                {currentUser.timetable.length === 0 && (
-                  <Button onClick={addSampleTimetable} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    샘플 시간표 추가
-                  </Button>
-                )}
+              {currentUser.timetable.length !== 0 && (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onNavigate("profile")}
+                  onClick={() => onNavigate("profile", "bottom")}
                 >
                   시간표 편집
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-              </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -448,18 +445,15 @@ export default function Dashboard({
                 <p className="text-sm mt-2 mb-4">
                   시간표를 등록하면 공강 시간이 겹치는 친구들을 찾을 수 있어요
                 </p>
-                <div className="flex justify-center space-x-2">
-                  <Button onClick={addSampleTimetable}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    샘플 시간표 추가
-                  </Button>
+                {currentUser.timetable.length === 0 && (
                   <Button
-                    variant="outline"
-                    onClick={() => onNavigate("profile")}
+                    onClick={() => onNavigate("profile", "bottom")}
+                    size="sm"
                   >
-                    직접 추가하기
+                    <Plus className="w-4 h-4 mr-2" />
+                    시간표 등록
                   </Button>
-                </div>
+                )}
               </div>
             )}
           </CardContent>
