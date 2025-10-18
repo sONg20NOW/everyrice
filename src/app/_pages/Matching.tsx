@@ -149,8 +149,8 @@ export default function Matching({
               <p className="text-gray-600 mb-4">
                 시간표가 있어야 공강 시간이 겹치는 친구들을 찾을 수 있어요
               </p>
-              <Button onClick={() => onNavigate("dashboard")}>
-                대시보드로 이동
+              <Button onClick={() => onNavigate("profile")}>
+                프로필로 이동
               </Button>
             </CardContent>
           </Card>
