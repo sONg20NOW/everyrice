@@ -1,29 +1,32 @@
-import { MatchResult, FreeTimeSlot } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, MapPin, Heart, MessageCircle } from 'lucide-react';
-import { dayToString, timeToString } from '@/lib/timetable';
+import { MatchResult, FreeTimeSlot } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Clock, MapPin, Heart, MessageCircle } from "lucide-react";
+import { dayToString, timeToString } from "@/lib/timetable";
 
 interface MatchingCardProps {
   match: MatchResult;
   onSendRequest: (userId: string, timeSlot: FreeTimeSlot) => void;
 }
 
-export default function MatchingCard({ match, onSendRequest }: MatchingCardProps) {
+export default function MatchingCard({
+  match,
+  onSendRequest,
+}: MatchingCardProps) {
   const { user, commonFreeTime, matchScore } = match;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-gray-500';
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-yellow-500";
+    return "bg-gray-500";
   };
 
   const getScoreText = (score: number) => {
-    if (score >= 80) return '매우 좋음';
-    if (score >= 60) return '좋음';
-    return '보통';
+    if (score >= 80) return "매우 좋음";
+    if (score >= 60) return "좋음";
+    return "보통";
   };
 
   return (
@@ -40,12 +43,16 @@ export default function MatchingCard({ match, onSendRequest }: MatchingCardProps
             <div>
               <CardTitle className="text-lg">{user.name}</CardTitle>
               <p className="text-sm text-gray-600">
-                {user.department} {user.year}학년
+                {user.department} {user.grade}학년
               </p>
             </div>
           </div>
           <div className="text-right">
-            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${getScoreColor(matchScore)}`}>
+            <div
+              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${getScoreColor(
+                matchScore
+              )}`}
+            >
               {matchScore}점
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -69,9 +76,13 @@ export default function MatchingCard({ match, onSendRequest }: MatchingCardProps
           </h4>
           <div className="grid grid-cols-1 gap-2">
             {commonFreeTime.slice(0, 3).map((slot, index) => (
-              <div key={index} className="flex items-center justify-between bg-blue-50 p-2 rounded">
+              <div
+                key={index}
+                className="flex items-center justify-between bg-blue-50 p-2 rounded"
+              >
                 <span className="text-sm">
-                  {dayToString(slot.day)} {timeToString(slot.startTime)} - {timeToString(slot.endTime)}
+                  {dayToString(slot.day)} {timeToString(slot.startTime)} -{" "}
+                  {timeToString(slot.endTime)}
                 </span>
                 <Button
                   size="sm"
