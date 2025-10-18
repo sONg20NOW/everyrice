@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -10,17 +12,15 @@ export default function NotFoundPage() {
           <h2 className="text-2xl font-semibold text-gray-800">
             Page Not Found
           </h2>
-          <p className="text-muted-foreground">
-            {`The page you're looking for doesn't exist or may have been moved.`}
-          </p>
+          <p className="text-muted-foreground">{`잘못된 URL 접근입니다.`}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild>
-            <Link href="/">Return Home</Link>
+            <Link href="/">홈으로 돌아가기</Link>
           </Button>
           <Button variant="outline" onClick={() => window.history.back()}>
-            Go Back
+            뒤로가기
           </Button>
         </div>
       </div>
