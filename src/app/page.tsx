@@ -64,11 +64,7 @@ export default function Home() {
           onNavigate={handleNavigate}
         />
         {currentPage === "dashboard" && (
-          <Dashboard
-            currentUser={currentUser}
-            onUpdateUser={handleUpdateUser}
-            onNavigate={handleNavigate}
-          />
+          <Dashboard currentUser={currentUser} onNavigate={handleNavigate} />
         )}
         {currentPage === "matching" && (
           <Matching currentUser={currentUser} onNavigate={handleNavigate} />

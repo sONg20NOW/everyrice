@@ -44,18 +44,13 @@ interface MealType {
 
 interface DashboardProps {
   currentUser: User;
-  onUpdateUser: (user: User) => void;
   onNavigate: (
     page: "dashboard" | "matching" | "profile",
     scrollTo?: "top" | "bottom"
   ) => void;
 }
 
-export default function Dashboard({
-  currentUser,
-  onUpdateUser,
-  onNavigate,
-}: DashboardProps) {
+export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
   const [sampleUsers] = useState(() => generateSampleUsers());
   const [matchRequests, setMatchRequests] = useState<MatchRequest[]>([]);
   const [isCreateMatchOpen, setIsCreateMatchOpen] = useState(false);
@@ -149,57 +144,6 @@ export default function Dashboard({
     }
 
     return mealTypes;
-  };
-
-  const addSampleTimetable = () => {
-    const sampleTimetable: TimeSlot[] = [
-      {
-        id: 0,
-        day: 0,
-        startTime: 9,
-        endTime: 10.5,
-        subject: "웹프로그래밍",
-        location: "공학관 301",
-        professor: "김교수",
-      },
-      {
-        id: 1,
-        day: 0,
-        startTime: 14,
-        endTime: 15.5,
-        subject: "데이터베이스",
-        location: "공학관 201",
-        professor: "이교수",
-      },
-      {
-        id: 2,
-        day: 2,
-        startTime: 11,
-        endTime: 12.5,
-        subject: "소프트웨어공학",
-        location: "공학관 401",
-        professor: "박교수",
-      },
-      {
-        id: 3,
-        day: 4,
-        startTime: 13,
-        endTime: 14.5,
-        subject: "네트워크보안",
-        location: "공학관 501",
-        professor: "최교수",
-      },
-    ];
-
-    onUpdateUser({
-      ...currentUser,
-      timetable: sampleTimetable,
-    });
-
-    toast.success("샘플 시간표가 추가되었습니다! 🎉", {
-      position: "top-right",
-      duration: 3000,
-    });
   };
 
   const handleCreateMatch = (timeSlot: FreeTimeSlot) => {

@@ -26,6 +26,7 @@ import {
   Utensils,
   Camera,
   TimerIcon,
+  TableIcon,
 } from "lucide-react";
 import AddClassDialog from "@/components/AddClassDialog";
 import {
@@ -183,9 +184,57 @@ export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
     toast.success("모든 수업이 삭제되었습니다.");
   };
 
+  const addSampleTimetable = () => {
+    const sampleTimetable: TimeSlot[] = [
+      {
+        id: 0,
+        day: 0,
+        startTime: 9,
+        endTime: 10.5,
+        subject: "웹프로그래밍",
+        location: "공학관 301",
+        professor: "김교수",
+      },
+      {
+        id: 1,
+        day: 0,
+        startTime: 14,
+        endTime: 15.5,
+        subject: "데이터베이스",
+        location: "공학관 201",
+        professor: "이교수",
+      },
+      {
+        id: 2,
+        day: 2,
+        startTime: 11,
+        endTime: 12.5,
+        subject: "소프트웨어공학",
+        location: "공학관 401",
+        professor: "박교수",
+      },
+      {
+        id: 3,
+        day: 4,
+        startTime: 13,
+        endTime: 14.5,
+        subject: "네트워크보안",
+        location: "공학관 501",
+        professor: "최교수",
+      },
+    ];
+
+    setEditedTimeTable(sampleTimetable);
+
+    toast.success("샘플 시간표가 추가되었습니다! 🎉", {
+      position: "top-right",
+      duration: 3000,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <UserIcon className="w-7 h-7 mr-3 text-red-500" />
@@ -506,6 +555,11 @@ export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
                       />
                       <AddClassDialog addTimeSlot={addTimeSlot} />
                     </div>
+                    <p className="text-sm">혹은...</p>
+                    <Button variant={"secondary"} onClick={addSampleTimetable}>
+                      <TableIcon />
+                      샘플시간표 추가
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-sm mt-2">
