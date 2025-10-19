@@ -6,7 +6,8 @@ import Dashboard from "./_pages/Dashboard";
 import Matching from "./_pages/Matching";
 import Profile from "./_pages/Profile";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
+import Navigation from "@/components/Navigation";
 
 export default function Home() {
   const router = useRouter();
@@ -56,6 +57,12 @@ export default function Home() {
   return (
     currentUser && (
       <div className="min-h-screen">
+        <Navigation
+          currentUser={currentUser}
+          currentPage={currentPage}
+          onLogout={handleLogout}
+          onNavigate={handleNavigate}
+        />
         {currentPage === "dashboard" && (
           <Dashboard
             currentUser={currentUser}

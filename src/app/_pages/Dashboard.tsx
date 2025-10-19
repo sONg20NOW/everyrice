@@ -34,7 +34,7 @@ import {
   Moon,
   Sun,
 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 interface DashboardProps {
   currentUser: User;
@@ -197,7 +197,7 @@ export default function Dashboard({
 
     toast.success("샘플 시간표가 추가되었습니다! 🎉", {
       position: "top-right",
-      autoClose: 3000,
+      duration: 3000,
     });
   };
 
@@ -248,7 +248,7 @@ export default function Dashboard({
       `${dayName}요일 ${timeStr} ${selectedMealType} 매칭 요청이 생성되었습니다! 🍽️`,
       {
         position: "top-right",
-        autoClose: 4000,
+        duration: 4000,
       }
     );
 
@@ -260,14 +260,7 @@ export default function Dashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation
-        currentUser={currentUser}
-        currentPage="dashboard"
-        onLogout={onLogout}
-        onNavigate={onNavigate}
-      />
-
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto p-6 space-y-6 ">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">

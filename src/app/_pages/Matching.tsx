@@ -119,13 +119,6 @@ export default function Matching({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation
-        currentUser={currentUser}
-        currentPage="matching"
-        onLogout={onLogout}
-        onNavigate={onNavigate}
-      />
-
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>

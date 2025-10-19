@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import RegisterDialog from "./_component/RegisterDialog";
 
