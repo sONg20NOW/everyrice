@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { TimeSlot, User } from "@/types";
+import { TimeSlot } from "@/types";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -28,11 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { toast } from "sonner";
 
 export default function AddClassDialog({
-  setEditedUser,
+  addTimeSlot,
 }: {
-  setEditedUser: React.Dispatch<React.SetStateAction<User>>;
+  addTimeSlot: (time: TimeSlot) => boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -56,12 +57,23 @@ export default function AddClassDialog({
       return;
     }
 
-    setEditedUser((prev) => ({
-      ...prev,
-      timetable: [...prev.timetable, data],
-    }));
+    if (typeof data.day === "string") {
+      data.day = Number(data.day);
+    }
 
-    setOpen(false);
+    const successAdding = addTimeSlot(data);
+    console.log(`${JSON.stringify(data)}, is ${successAdding}`);
+    if (successAdding) {
+      form.reset();
+
+      toast.success(
+        <div>
+          <span color="yellow">data.subject</span> 수업이 정상적으로
+          추가되었습니다!
+        </div>
+      );
+      setOpen(false);
+    }
   };
 
   return (
