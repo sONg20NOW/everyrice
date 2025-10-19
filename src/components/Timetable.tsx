@@ -5,10 +5,8 @@ import { XIcon } from "lucide-react";
 
 interface TimetableProps {
   timetable: TimeSlot[];
-  removeClass: (id: number) => void;
+  removeClass?: (id: number) => void;
   editable?: boolean;
-  onAddSlot?: (slot: TimeSlot) => void;
-  onRemoveSlot?: (index: number) => void;
 }
 
 export default function Timetable({
@@ -102,15 +100,17 @@ export default function Timetable({
                           {slot.professor}
                         </div>
                       )}
-                      <Button
-                        className="absolute right-0 top-0 p-0 h-5 w-5 hover:bg-inherit text-red-600 hover:text-red-300"
-                        variant={"ghost"}
-                        size={"icon-sm"}
-                        type="button"
-                        onClick={() => removeClass(slot.id)}
-                      >
-                        <XIcon />
-                      </Button>
+                      {editable && (
+                        <Button
+                          className="absolute right-0 top-0 p-0 h-5 w-5 hover:bg-inherit text-red-600 hover:text-red-300"
+                          variant={"ghost"}
+                          size={"icon-sm"}
+                          type="button"
+                          onClick={() => removeClass && removeClass(slot.id)}
+                        >
+                          <XIcon />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

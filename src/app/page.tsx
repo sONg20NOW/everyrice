@@ -66,25 +66,15 @@ export default function Home() {
         {currentPage === "dashboard" && (
           <Dashboard
             currentUser={currentUser}
-            onLogout={handleLogout}
             onUpdateUser={handleUpdateUser}
             onNavigate={handleNavigate}
           />
         )}
         {currentPage === "matching" && (
-          <Matching
-            currentUser={currentUser}
-            onLogout={handleLogout}
-            onNavigate={handleNavigate}
-          />
+          <Matching currentUser={currentUser} onNavigate={handleNavigate} />
         )}
         {currentPage === "profile" && (
-          <Profile
-            currentUser={currentUser}
-            onLogout={handleLogout}
-            onUpdateUser={handleUpdateUser}
-            onNavigate={handleNavigate}
-          />
+          <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />
         )}
       </div>
     )

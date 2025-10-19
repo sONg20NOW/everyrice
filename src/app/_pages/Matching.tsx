@@ -32,15 +32,10 @@ import {
 
 interface MatchingProps {
   currentUser: User;
-  onLogout: () => void;
   onNavigate: (page: "dashboard" | "matching" | "profile") => void;
 }
 
-export default function Matching({
-  currentUser,
-  onLogout,
-  onNavigate,
-}: MatchingProps) {
+export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const [sampleUsers] = useState(() => generateSampleUsers());
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [matchRequests, setMatchRequests] = useState<MatchRequest[]>([]);

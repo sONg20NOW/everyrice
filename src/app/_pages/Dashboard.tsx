@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Timetable from "@/components/Timetable";
-import Navigation from "@/components/Navigation";
 import { User, TimeSlot, MatchRequest, FreeTimeSlot } from "@/types";
 import { generateSampleUsers, calculateFreeTime } from "@/lib/timetable";
 import {
@@ -36,16 +35,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface DashboardProps {
-  currentUser: User;
-  onLogout: () => void;
-  onUpdateUser: (user: User) => void;
-  onNavigate: (
-    page: "dashboard" | "matching" | "profile",
-    scrollTo?: "top" | "bottom"
-  ) => void;
-}
-
 interface MealType {
   type: string;
   icon: typeof Moon;
@@ -53,9 +42,17 @@ interface MealType {
   timeRange: string;
 }
 
+interface DashboardProps {
+  currentUser: User;
+  onUpdateUser: (user: User) => void;
+  onNavigate: (
+    page: "dashboard" | "matching" | "profile",
+    scrollTo?: "top" | "bottom"
+  ) => void;
+}
+
 export default function Dashboard({
   currentUser,
-  onLogout,
   onUpdateUser,
   onNavigate,
 }: DashboardProps) {
@@ -157,6 +154,7 @@ export default function Dashboard({
   const addSampleTimetable = () => {
     const sampleTimetable: TimeSlot[] = [
       {
+        id: 0,
         day: 0,
         startTime: 9,
         endTime: 10.5,
@@ -165,6 +163,7 @@ export default function Dashboard({
         professor: "김교수",
       },
       {
+        id: 1,
         day: 0,
         startTime: 14,
         endTime: 15.5,
@@ -173,6 +172,7 @@ export default function Dashboard({
         professor: "이교수",
       },
       {
+        id: 2,
         day: 2,
         startTime: 11,
         endTime: 12.5,
@@ -181,6 +181,7 @@ export default function Dashboard({
         professor: "박교수",
       },
       {
+        id: 3,
         day: 4,
         startTime: 13,
         endTime: 14.5,
