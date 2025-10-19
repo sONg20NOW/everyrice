@@ -62,13 +62,12 @@ export default function AddClassDialog({
     }
 
     const successAdding = addTimeSlot(data);
-    console.log(`${JSON.stringify(data)}, is ${successAdding}`);
     if (successAdding) {
       form.reset();
 
       toast.success(
         <div>
-          <span color="yellow">data.subject</span> 수업이 정상적으로
+          <span color="yellow">{data.subject}</span> 수업이 정상적으로
           추가되었습니다!
         </div>
       );

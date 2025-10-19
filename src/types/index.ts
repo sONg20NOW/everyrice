@@ -1,5 +1,6 @@
 // 시간표 관련 타입
 export interface TimeSlot extends FreeTimeSlot {
+  id: number;
   subject: string; // 과목명
   location?: string; // 강의실
   professor?: string; // 교수명
