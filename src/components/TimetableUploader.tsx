@@ -2,13 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Upload, FileImage, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -20,6 +14,7 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { TimeSlot } from "@/types";
+import Image from "next/image";
 
 interface TimetableUploaderProps {
   onTimetableExtracted: (schedule: TimeSlot[]) => void;
@@ -33,6 +28,7 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 export default function TimetableUploader({
   onTimetableExtracted,
 }: TimetableUploaderProps) {
+  const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -166,7 +162,8 @@ export default function TimetableUploader({
         throw new Error("JSON 응답에 'schedule' 배열이 없습니다.");
       }
       return parsedData.schedule;
-    } catch (parseError) {
+    } catch (e) {
+      console.log(e);
       // JSON 파싱 실패 시 텍스트에서 JSON 추출 시도
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -215,12 +212,13 @@ export default function TimetableUploader({
       });
     } finally {
       setIsProcessing(false);
+      setOpen(false);
     }
   };
 
   // DialogTrigger를 Button에 감싸는 대신 Button에 onClick 핸들러를 직접 추가
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Upload className="w-4 h-4 mr-2" />
@@ -254,7 +252,9 @@ export default function TimetableUploader({
               <div className="space-y-2">
                 <Label>미리보기</Label>
                 <div className="border rounded-lg p-2">
-                  <img
+                  <Image
+                    width={50}
+                    height={50}
                     src={previewUrl}
                     alt="시간표 미리보기"
                     className="w-full h-auto max-h-64 object-contain rounded"
