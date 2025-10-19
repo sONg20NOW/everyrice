@@ -102,7 +102,7 @@ export default function Timetable({
                       )}
                       {editable && (
                         <Button
-                          className="absolute right-0 top-0 p-0 h-5 w-5 hover:bg-inherit text-red-600 hover:text-red-300"
+                          className="absolute right-0 top-0 p-0 h-5 w-5 bg-red-100/75 hover:bg-red-100/75 text-red-600 hover:text-red-300"
                           variant={"ghost"}
                           size={"icon-sm"}
                           type="button"

@@ -158,7 +158,10 @@ export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
       }
     }
 
-    const timeWithId: TimeSlot = { ...time, id: Date.now() };
+    const timeWithId: TimeSlot = {
+      ...time,
+      id: Date.now() + Math.floor(Math.random() * 1000),
+    };
 
     setEditedTimeTable((prev) => [...prev, { ...timeWithId }]);
     console.log("수업 추가 완료", timeWithId);
