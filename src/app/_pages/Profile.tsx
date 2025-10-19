@@ -21,18 +21,15 @@ import { User, TimeSlot } from "@/types";
 import {
   User as UserIcon,
   Edit,
-  Plus,
   X,
   Clock,
   MapPin,
   Utensils,
   Camera,
-  Upload,
+  TimerIcon,
 } from "lucide-react";
 import { CalculateTime } from "@/lib/calculateTime";
-import { useForm } from "react-hook-form";
 import AddClassDialog from "@/components/AddClassDialog";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -43,6 +40,38 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+
+const foodTypes = [
+  "한식",
+  "중식",
+  "일식",
+  "양식",
+  "분식",
+  "치킨",
+  "피자",
+  "햄버거",
+  "카페",
+  "디저트",
+];
+const locations = [
+  "학생회관",
+  "기숙사 식당",
+  "카페테리아",
+  "외부 식당",
+  "편의점",
+  "학과 건물",
+];
+const mealTimes = [
+  { value: 11, label: "11:00" },
+  { value: 11.5, label: "11:30" },
+  { value: 12, label: "12:00" },
+  { value: 12.5, label: "12:30" },
+  { value: 13, label: "13:00" },
+  { value: 17.5, label: "17:30" },
+  { value: 18, label: "18:00" },
+  { value: 18.5, label: "18:30" },
+];
 
 interface ProfileProps {
   currentUser: User;
@@ -57,143 +86,133 @@ export default function Profile({
   onUpdateUser,
   onNavigate,
 }: ProfileProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedUser, setEditedUser] = useState<User>(currentUser);
-  const [isAddingClass, setIsAddingClass] = useState(false);
-  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isEditingTimeTable, setIsEditingTimeTable] = useState(false);
 
-  const foodTypes = [
-    "한식",
-    "중식",
-    "일식",
-    "양식",
-    "분식",
-    "치킨",
-    "피자",
-    "햄버거",
-    "카페",
-    "디저트",
-  ];
-  const locations = [
-    "학생회관",
-    "기숙사 식당",
-    "카페테리아",
-    "외부 식당",
-    "편의점",
-    "학과 건물",
-  ];
-  const mealTimes = [
-    { value: 11, label: "11:00" },
-    { value: 11.5, label: "11:30" },
-    { value: 12, label: "12:00" },
-    { value: 12.5, label: "12:30" },
-    { value: 13, label: "13:00" },
-    { value: 17.5, label: "17:30" },
-    { value: 18, label: "18:00" },
-    { value: 18.5, label: "18:30" },
-  ];
+  const [editedProfile, setEditedProfile] = useState<User>(currentUser);
+  const [editedTimeTable, setEditedTimeTable] = useState<TimeSlot[]>(
+    currentUser.timetable
+  );
 
-  const handleSave = () => {
-    onUpdateUser(editedUser);
-    setIsEditing(false);
+  const handleSaveUser = () => {
+    onUpdateUser({ ...editedProfile, timetable: currentUser.timetable });
+    setIsEditingProfile(false);
   };
 
-  const handleCancel = () => {
-    setEditedUser(currentUser);
-    setIsEditing(false);
+  const handleSaveTimeTable = () => {
+    console.log(editedTimeTable);
+    onUpdateUser({ ...currentUser, timetable: editedTimeTable });
+    setIsEditingTimeTable(false);
   };
 
   const addPreference = (type: "foodTypes" | "locations", value: string) => {
-    if (!editedUser.preferences[type].includes(value)) {
-      setEditedUser({
-        ...editedUser,
+    if (!editedProfile.preferences[type].includes(value)) {
+      setEditedProfile({
+        ...editedProfile,
         preferences: {
-          ...editedUser.preferences,
-          [type]: [...editedUser.preferences[type], value],
+          ...editedProfile.preferences,
+          [type]: [...editedProfile.preferences[type], value],
         },
       });
     }
   };
 
   const removePreference = (type: "foodTypes" | "locations", value: string) => {
-    setEditedUser({
-      ...editedUser,
+    setEditedProfile({
+      ...editedProfile,
       preferences: {
-        ...editedUser.preferences,
-        [type]: editedUser.preferences[type].filter((item) => item !== value),
+        ...editedProfile.preferences,
+        [type]: editedProfile.preferences[type].filter(
+          (item) => item !== value
+        ),
       },
     });
   };
 
   const toggleMealTime = (time: number) => {
-    const mealTimes = editedUser.preferences.mealTimes;
+    const mealTimes = editedProfile.preferences.mealTimes;
     if (mealTimes.includes(time)) {
-      setEditedUser({
-        ...editedUser,
+      setEditedProfile({
+        ...editedProfile,
         preferences: {
-          ...editedUser.preferences,
+          ...editedProfile.preferences,
           mealTimes: mealTimes.filter((t) => t !== time),
         },
       });
     } else {
-      setEditedUser({
-        ...editedUser,
+      setEditedProfile({
+        ...editedProfile,
         preferences: {
-          ...editedUser.preferences,
+          ...editedProfile.preferences,
           mealTimes: [...mealTimes, time].sort(),
         },
       });
     }
   };
 
+  // editedTimeTable에 수업 다건 추가 함수
+  const addTimeSlot = (time: TimeSlot) => {
+    for (const i of editedTimeTable) {
+      if (
+        (i.day === time.day &&
+          i.startTime < time.startTime &&
+          time.startTime < i.endTime) ||
+        (i.startTime < time.endTime && time.endTime < i.endTime) ||
+        (i.startTime <= time.startTime && time.endTime <= i.endTime)
+      ) {
+        toast.error("시간이 겹치는 다른 수업이 존재합니다!", {
+          duration: 1500,
+        });
+        return false;
+      }
+    }
+    setEditedTimeTable((prev) => [...prev, time]);
+    console.log("수업 추가 완료", time);
+    return true;
+  };
+
   const removeClass = (index: number) => {
-    setEditedUser({
-      ...editedUser,
-      timetable: editedUser.timetable.filter((_, i) => i !== index),
+    setEditedProfile({
+      ...editedProfile,
+      timetable: editedProfile.timetable.filter((_, i) => i !== index),
     });
   };
 
   const handleScheduleParsed = (schedule: TimeSlot[]) => {
-    setEditedUser({
-      ...editedUser,
-      timetable: [...editedUser.timetable, ...schedule],
-    });
-    setIsUploaderOpen(false);
+    for (const time of schedule) {
+      addTimeSlot(time);
+    }
   };
 
   const clearTimetable = () => {
-    setEditedUser({
-      ...editedUser,
-      timetable: [],
-    });
+    setEditedTimeTable([]);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation
-        currentUser={currentUser}
-        currentPage="profile"
-        onLogout={onLogout}
-        onNavigate={onNavigate}
-      />
-
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center">
             <UserIcon className="w-7 h-7 mr-3 text-red-500" />
             프로필 관리
           </h1>
-          {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)}>
+          {!isEditingProfile ? (
+            <Button onClick={() => setIsEditingProfile(true)}>
               <Edit className="w-4 h-4 mr-2" />
               편집
             </Button>
           ) : (
             <div className="space-x-2">
-              <Button variant="outline" onClick={handleCancel}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditedProfile(currentUser);
+                  setIsEditingProfile(false);
+                }}
+              >
                 취소
               </Button>
-              <Button onClick={handleSave}>저장</Button>
+              <Button onClick={handleSaveUser}>저장</Button>
             </div>
           )}
         </div>
@@ -212,15 +231,18 @@ export default function Profile({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                {isEditing ? (
+                {isEditingProfile ? (
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="name">이름</Label>
                       <Input
                         id="name"
-                        value={editedUser.name}
+                        value={editedProfile.name}
                         onChange={(e) =>
-                          setEditedUser({ ...editedUser, name: e.target.value })
+                          setEditedProfile({
+                            ...editedProfile,
+                            name: e.target.value,
+                          })
                         }
                       />
                     </div>
@@ -228,9 +250,12 @@ export default function Profile({
                       <Label htmlFor="bio">자기소개</Label>
                       <Textarea
                         id="bio"
-                        value={editedUser.bio || ""}
+                        value={editedProfile.bio || ""}
                         onChange={(e) =>
-                          setEditedUser({ ...editedUser, bio: e.target.value })
+                          setEditedProfile({
+                            ...editedProfile,
+                            bio: e.target.value,
+                          })
                         }
                         placeholder="간단한 자기소개를 작성해보세요"
                         rows={2}
@@ -275,13 +300,15 @@ export default function Profile({
                   <Button
                     key={time.value}
                     variant={
-                      editedUser.preferences.mealTimes.includes(time.value)
+                      editedProfile.preferences.mealTimes.includes(time.value)
                         ? "default"
                         : "outline"
                     }
                     size="sm"
-                    onClick={() => isEditing && toggleMealTime(time.value)}
-                    disabled={!isEditing}
+                    onClick={() =>
+                      isEditingProfile && toggleMealTime(time.value)
+                    }
+                    disabled={!isEditingProfile}
                     className="text-xs"
                   >
                     {time.label}
@@ -298,14 +325,14 @@ export default function Profile({
               </Label>
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {editedUser.preferences.foodTypes.map((food) => (
+                  {editedProfile.preferences.foodTypes.map((food) => (
                     <Badge
                       key={food}
                       variant="default"
                       className="flex items-center space-x-1"
                     >
                       <span>{food}</span>
-                      {isEditing && (
+                      {isEditingProfile && (
                         <X
                           className="w-3 h-3 cursor-pointer"
                           onClick={() => removePreference("foodTypes", food)}
@@ -314,7 +341,7 @@ export default function Profile({
                     </Badge>
                   ))}
                 </div>
-                {isEditing && (
+                {isEditingProfile && (
                   <Select
                     onValueChange={(value) => addPreference("foodTypes", value)}
                   >
@@ -325,7 +352,7 @@ export default function Profile({
                       {foodTypes
                         .filter(
                           (food) =>
-                            !editedUser.preferences.foodTypes.includes(food)
+                            !editedProfile.preferences.foodTypes.includes(food)
                         )
                         .map((food) => (
                           <SelectItem key={food} value={food}>
@@ -346,14 +373,14 @@ export default function Profile({
               </Label>
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {editedUser.preferences.locations.map((location) => (
+                  {editedProfile.preferences.locations.map((location) => (
                     <Badge
                       key={location}
                       variant="secondary"
                       className="flex items-center space-x-1"
                     >
                       <span>{location}</span>
-                      {isEditing && (
+                      {isEditingProfile && (
                         <X
                           className="w-3 h-3 cursor-pointer"
                           onClick={() =>
@@ -364,7 +391,7 @@ export default function Profile({
                     </Badge>
                   ))}
                 </div>
-                {isEditing && (
+                {isEditingProfile && (
                   <Select
                     onValueChange={(value) => addPreference("locations", value)}
                   >
@@ -375,7 +402,7 @@ export default function Profile({
                       {locations
                         .filter(
                           (loc) =>
-                            !editedUser.preferences.locations.includes(loc)
+                            !editedProfile.preferences.locations.includes(loc)
                         )
                         .map((location) => (
                           <SelectItem key={location} value={location}>
@@ -389,17 +416,41 @@ export default function Profile({
             </div>
           </CardContent>
         </Card>
-
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+            <TimerIcon className="w-7 h-7 mr-3 text-red-500" />
+            시간표 관리
+          </h1>
+          {!isEditingTimeTable ? (
+            <Button onClick={() => setIsEditingTimeTable(true)}>
+              <Edit className="w-4 h-4 mr-2" />
+              편집
+            </Button>
+          ) : (
+            <div className="space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditedTimeTable(currentUser.timetable);
+                  setIsEditingTimeTable(false);
+                }}
+              >
+                취소
+              </Button>
+              <Button onClick={handleSaveTimeTable}>저장</Button>
+            </div>
+          )}
+        </div>
         {/* 시간표 */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>시간표</CardTitle>
-              {isEditing && (
+              {isEditingTimeTable && (
                 <div className="flex space-x-2">
-                  {editedUser.timetable.length > 0 && (
+                  {editedTimeTable.length > 0 && (
                     <div className="flex gap-2">
-                      <AddClassDialog setEditedUser={setEditedUser} />
+                      <AddClassDialog addTimeSlot={addTimeSlot} />
                       <ClearTimeTableDialog clearTimetable={clearTimetable} />
                     </div>
                   )}
@@ -408,13 +459,13 @@ export default function Profile({
             </div>
           </CardHeader>
           <CardContent>
-            {editedUser.timetable.length > 0 ? (
+            {editedTimeTable.length > 0 ? (
               <div className="space-y-4">
-                <Timetable timetable={editedUser.timetable} />
-                {isEditing && (
+                <Timetable timetable={editedTimeTable} />
+                {isEditingTimeTable && (
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-900">등록된 수업</h4>
-                    {editedUser.timetable.map((slot, index) => (
+                    {editedTimeTable.map((slot, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between bg-gray-50 p-2 rounded"
@@ -444,7 +495,7 @@ export default function Profile({
                 <p className="text-lg font-medium mb-2">
                   등록된 시간표가 없습니다
                 </p>
-                {isEditing ? (
+                {isEditingTimeTable ? (
                   <div className="space-y-2">
                     <p className="text-sm">
                       시간표 이미지를 업로드하거나 직접 수업을 추가해보세요
@@ -454,7 +505,7 @@ export default function Profile({
                       <TimetableUploader
                         onTimetableExtracted={handleScheduleParsed}
                       />
-                      <AddClassDialog setEditedUser={setEditedUser} />
+                      <AddClassDialog addTimeSlot={addTimeSlot} />
                     </div>
                   </div>
                 ) : (
