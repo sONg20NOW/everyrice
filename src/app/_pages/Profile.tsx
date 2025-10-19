@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Navigation from "@/components/Navigation";
 import Timetable from "@/components/Timetable";
 import TimetableUploader from "@/components/TimetableUploader";
 import { User, TimeSlot } from "@/types";
@@ -28,7 +27,6 @@ import {
   Camera,
   TimerIcon,
 } from "lucide-react";
-import { CalculateTime } from "@/lib/calculateTime";
 import AddClassDialog from "@/components/AddClassDialog";
 import {
   AlertDialog,
@@ -75,17 +73,10 @@ const mealTimes = [
 
 interface ProfileProps {
   currentUser: User;
-  onLogout: () => void;
   onUpdateUser: (user: User) => void;
-  onNavigate: (page: "dashboard" | "matching" | "profile") => void;
 }
 
-export default function Profile({
-  currentUser,
-  onLogout,
-  onUpdateUser,
-  onNavigate,
-}: ProfileProps) {
+export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingTimeTable, setIsEditingTimeTable] = useState(false);
 
@@ -153,29 +144,29 @@ export default function Profile({
   // editedTimeTable에 수업 다건 추가 함수
   const addTimeSlot = (time: TimeSlot) => {
     for (const i of editedTimeTable) {
+      if (i.day !== time.day) continue;
       if (
-        (i.day === time.day &&
-          i.startTime < time.startTime &&
-          time.startTime < i.endTime) ||
+        (i.startTime < time.startTime && time.startTime < i.endTime) ||
         (i.startTime < time.endTime && time.endTime < i.endTime) ||
         (i.startTime <= time.startTime && time.endTime <= i.endTime)
       ) {
+        console.log("duplicate classes\n", i, time);
         toast.error("시간이 겹치는 다른 수업이 존재합니다!", {
           duration: 1500,
         });
         return false;
       }
     }
-    setEditedTimeTable((prev) => [...prev, time]);
-    console.log("수업 추가 완료", time);
+
+    const timeWithId: TimeSlot = { ...time, id: Date.now() };
+
+    setEditedTimeTable((prev) => [...prev, { ...timeWithId }]);
+    console.log("수업 추가 완료", timeWithId);
     return true;
   };
 
-  const removeClass = (index: number) => {
-    setEditedProfile({
-      ...editedProfile,
-      timetable: editedProfile.timetable.filter((_, i) => i !== index),
-    });
+  const removeClass = (id: number) => {
+    setEditedTimeTable(editedTimeTable.filter((v) => v.id !== id));
   };
 
   const handleScheduleParsed = (schedule: TimeSlot[]) => {
@@ -186,6 +177,7 @@ export default function Profile({
 
   const clearTimetable = () => {
     setEditedTimeTable([]);
+    toast.success("모든 수업이 삭제되었습니다.");
   };
 
   return (
@@ -461,8 +453,12 @@ export default function Profile({
           <CardContent>
             {editedTimeTable.length > 0 ? (
               <div className="space-y-4">
-                <Timetable timetable={editedTimeTable} />
-                {isEditingTimeTable && (
+                <Timetable
+                  timetable={editedTimeTable}
+                  removeClass={removeClass}
+                  editable={isEditingTimeTable}
+                />
+                {/* {isEditingTimeTable && (
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-900">등록된 수업</h4>
                     {editedTimeTable.map((slot, index) => (
@@ -487,7 +483,7 @@ export default function Profile({
                       </div>
                     ))}
                   </div>
-                )}
+                )} */}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
