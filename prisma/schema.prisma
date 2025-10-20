@@ -10,6 +10,115 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// 1. Enum 정의
+// ----------------------------------------------------
+
+// 매칭 요청 상태
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// 매칭 요청 타입
+enum MatchType {
+  BIDIRECTIONAL // 양방향
+  UNIDIRECTIONAL // 단방향
+}
+
+// ----------------------------------------------------
+// 2. Main Models
+// ----------------------------------------------------
+
+// TimeSlot (수업 정보) 모델
+model TimeSlot {
+  id          Int      @id @default(autoincrement()) 
+  subject     String   // 과목명
+  location    String?  // 강의실
+  professor   String?  // 교수명
+  
+  // FreeTimeSlot 필드 (인라인으로 분리)
+  day         Int
+  startTime   Float
+  endTime     Float
+
+  // User 관계 설정: TimeSlot은 User에 속함 (N:1)
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId]) 
+}
+
+// User 모델
+model User {
+  id              Int            @id @default(autoincrement())
+  name            String
+  department      String
+  grade           Int
+  email           String         @unique 
+  bio             String?        
+  avatar          String?        
+
+  // TimeSlot 관계: User가 소유한 모든 수업 시간표
+  timetable       TimeSlot[]
+
+  // 선호 설정: SQLite는 Composite Type을 지원하지 않으므로 JSON 문자열로 저장합니다.
+  // 코드에서 JSON.stringify/JSON.parse를 사용해야 합니다.
+  preferencesJson String         @default("{ \"mealTimes\": [], \"locations\": [], \"foodTypes\": [] }") @map("preferences")
+
+  // MatchRequest 관계: 사용자가 보냈거나 받은 매칭 요청
+  sentRequests    MatchRequest[] @relation("SentMatches")
+  receivedRequests MatchRequest[] @relation("ReceivedMatches")
+  
+  // ⭐️ MatchResult 역관계 추가 (누락된 관계 필드 해결)
+  matchResults    MatchResult[]
+
+  @@map("users") // 테이블명 명시
+}
+
+// MatchRequest 모델
+model MatchRequest {
+  id              Int           @id @default(autoincrement())
+  
+  // From User (요청을 보낸 사용자)
+  fromUserId      Int
+  fromUser        User          @relation("SentMatches", fields: [fromUserId], references: [id])
+
+  // To User (요청을 받은 사용자)
+  toUserId        Int
+  toUser          User          @relation("ReceivedMatches", fields: [toUserId], references: [id])
+  
+  // 제안된 시간: FreeTimeSlot 구조가 JSON 문자열로 저장됩니다.
+  proposedTimeJson String        @map("proposedTime") 
+
+  message         String?
+  status          MatchStatus
+  createdAt       DateTime      @default(now())
+  type            MatchType
+
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@map("match_requests")
+}
+
+// MatchResult (매칭 결과) 모델
+model MatchResult {
+  id               Int      @id @default(autoincrement())
+  
+  // 매칭된 사용자
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+
+  // 공통 자유 시간: FreeTimeSlot[]은 JSON 문자열로 저장됩니다.
+  commonFreeTimeJson String   @map("commonFreeTime")
+  
+  matchScore       Float    // 매칭 점수
+
+  @@index([userId])
+  @@map("match_results")
 }
