@@ -139,7 +139,7 @@ export const generateMatches = (
 export const generateSampleUsers = (): User[] => {
   return [
     {
-      id: "1",
+      id: 1,
       name: "김철수",
       department: "컴퓨터공학과",
       grade: 3,
@@ -147,6 +147,7 @@ export const generateSampleUsers = (): User[] => {
       bio: "맛집 탐방을 좋아합니다!",
       timetable: [
         {
+          id: 100001,
           day: 0,
           startTime: 9,
           endTime: 10.5,
@@ -154,6 +155,7 @@ export const generateSampleUsers = (): User[] => {
           location: "공학관 201",
         },
         {
+          id: 100002,
           day: 0,
           startTime: 13,
           endTime: 14.5,
@@ -161,6 +163,7 @@ export const generateSampleUsers = (): User[] => {
           location: "공학관 301",
         },
         {
+          id: 100003,
           day: 2,
           startTime: 10,
           endTime: 11.5,
@@ -168,6 +171,7 @@ export const generateSampleUsers = (): User[] => {
           location: "공학관 202",
         },
         {
+          id: 100004,
           day: 4,
           startTime: 14,
           endTime: 15.5,
@@ -182,7 +186,7 @@ export const generateSampleUsers = (): User[] => {
       },
     },
     {
-      id: "2",
+      id: 2,
       name: "이영희",
       department: "컴퓨터공학과",
       grade: 2,
@@ -190,6 +194,7 @@ export const generateSampleUsers = (): User[] => {
       bio: "새로운 사람들과 만나는 것을 좋아해요",
       timetable: [
         {
+          id: 200001,
           day: 1,
           startTime: 9,
           endTime: 10.5,
@@ -197,6 +202,7 @@ export const generateSampleUsers = (): User[] => {
           location: "공학관 101",
         },
         {
+          id: 200002,
           day: 1,
           startTime: 14,
           endTime: 15.5,
@@ -204,6 +210,7 @@ export const generateSampleUsers = (): User[] => {
           location: "자연관 201",
         },
         {
+          id: 200003,
           day: 3,
           startTime: 11,
           endTime: 12.5,
@@ -211,6 +218,7 @@ export const generateSampleUsers = (): User[] => {
           location: "자연관 301",
         },
         {
+          id: 200004,
           day: 4,
           startTime: 9,
           endTime: 10.5,
@@ -225,7 +233,7 @@ export const generateSampleUsers = (): User[] => {
       },
     },
     {
-      id: "3",
+      id: 3,
       name: "박민수",
       department: "경영학과",
       grade: 4,
@@ -233,6 +241,7 @@ export const generateSampleUsers = (): User[] => {
       bio: "졸업 전에 많은 사람들과 인연을 만들고 싶습니다",
       timetable: [
         {
+          id: 300001,
           day: 0,
           startTime: 11,
           endTime: 12.5,
@@ -240,6 +249,7 @@ export const generateSampleUsers = (): User[] => {
           location: "경영관 301",
         },
         {
+          id: 300002,
           day: 2,
           startTime: 9,
           endTime: 10.5,
@@ -247,6 +257,7 @@ export const generateSampleUsers = (): User[] => {
           location: "경영관 201",
         },
         {
+          id: 300003,
           day: 2,
           startTime: 15,
           endTime: 16.5,
@@ -254,6 +265,7 @@ export const generateSampleUsers = (): User[] => {
           location: "경영관 401",
         },
         {
+          id: 300004,
           day: 4,
           startTime: 13,
           endTime: 14.5,

@@ -7,7 +7,7 @@ export interface TimeSlot extends FreeTimeSlot {
 }
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   department: string;
   grade: number;
@@ -23,9 +23,9 @@ export interface User {
 }
 
 export interface MatchRequest {
-  id: string;
-  fromUserId: string;
-  toUserId: string;
+  id: number;
+  fromUserId: number;
+  toUserId: number;
   proposedTime: {
     day: number;
     startTime: number;

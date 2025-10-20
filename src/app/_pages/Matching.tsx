@@ -9,9 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import Navigation from "@/components/Navigation";
 import MatchingCard from "@/components/MatchingCard";
 import { User, MatchRequest, FreeTimeSlot, MatchResult } from "@/types";
 import {
@@ -43,7 +41,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<FreeTimeSlot | null>(
     null
   );
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState(0);
   const [requestMessage, setRequestMessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -60,7 +58,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
       match.user.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSendRequest = (userId: string, timeSlot: FreeTimeSlot) => {
+  const handleSendRequest = (userId: number, timeSlot: FreeTimeSlot) => {
     setSelectedUserId(userId);
     setSelectedTimeSlot(timeSlot);
     setIsDialogOpen(true);
@@ -69,7 +67,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const submitRequest = () => {
     if (selectedTimeSlot && selectedUserId) {
       const newRequest: MatchRequest = {
-        id: Date.now().toString(),
+        id: Date.now(),
         fromUserId: currentUser.id,
         toUserId: selectedUserId,
         proposedTime: selectedTimeSlot,
@@ -83,12 +81,12 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
       setIsDialogOpen(false);
       setRequestMessage("");
       setSelectedTimeSlot(null);
-      setSelectedUserId("");
+      setSelectedUserId(0);
     }
   };
 
   const handleRequestAction = (
-    requestId: string,
+    requestId: number,
     action: "accepted" | "rejected"
   ) => {
     setMatchRequests((prev) =>
@@ -101,8 +99,8 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   // 샘플 받은 요청 생성
   const receivedRequests: MatchRequest[] = [
     {
-      id: "sample1",
-      fromUserId: "2",
+      id: 10002,
+      fromUserId: 2,
       toUserId: currentUser.id,
       proposedTime: { day: 0, startTime: 12, endTime: 13 },
       message: "안녕하세요! 같이 점심 드실래요?",

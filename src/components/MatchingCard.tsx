@@ -8,7 +8,7 @@ import { dayToString, timeToString } from "@/lib/timetable";
 
 interface MatchingCardProps {
   match: MatchResult;
-  onSendRequest: (userId: string, timeSlot: FreeTimeSlot) => void;
+  onSendRequest: (userId: number, timeSlot: FreeTimeSlot) => void;
 }
 
 export default function MatchingCard({
