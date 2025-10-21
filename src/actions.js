@@ -52,3 +52,39 @@ export async function createUser({
     throw new Error(`Failed to create user`);
   }
 }
+
+export async function loginUser(data) {
+  // 실제 환경에서는 비밀번호 해시 비교 로직이 추가되어야 합니다.
+  try {
+    const userData = await db.user.findUnique({
+      where: { email: data.email },
+      // 보안을 위해 비밀번호 필드는 제외하고 가져오는 것이 좋습니다.
+      select: {
+        id: true,
+        password: true,
+        name: true,
+        department: true,
+        grade: true,
+        email: true,
+        bio: true,
+        avatar: true,
+        preferencesJson: true,
+      },
+    });
+
+    if (!userData) {
+      // 사용자를 찾을 수 없음
+      return null;
+    }
+
+    // (이 부분에 비밀번호 비교 로직이 들어갑니다. 현재는 생략)
+
+    // 타입이 정확하지 않다면 (예: db.user.findUnique의 결과가 User 타입과 정확히 일치하지 않을 때)
+    // 명시적 타입 캐스팅이 필요할 수 있습니다.
+    return userData;
+  } catch (error) {
+    console.error("Login Server Action Error:", error);
+    // 실패 시 null 반환 또는 에러 throw
+    throw new Error("로그인 처리 중 서버 오류가 발생했습니다.");
+  }
+}

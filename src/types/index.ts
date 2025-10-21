@@ -12,6 +12,7 @@ export interface User {
   department: string;
   grade: number;
   email: string;
+  password: string;
   bio?: string;
   avatar?: string;
   timetable: TimeSlot[];
