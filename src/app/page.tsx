@@ -8,6 +8,7 @@ import Profile from "./_pages/Profile";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
+import { getTimetableByUserId } from "@/actions";
 
 export default function Home() {
   const router = useRouter();
@@ -19,19 +20,28 @@ export default function Home() {
 
   // 로컬 스토리지에서 사용자 정보 복원
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    } else {
-      toast.error("로그인이 필요합니다.");
-      router.push("/login");
-    }
+    const handleCome = async () => {
+      if (localStorage.getItem("user")) {
+        const savedUser = JSON.parse(localStorage.getItem("user")!);
+        setCurrentUser({
+          ...savedUser,
+          preferences: JSON.parse(savedUser.preferencesJson),
+          timetable: await getTimetableByUserId(savedUser.id),
+        });
+      } else {
+        toast.error("로그인이 필요합니다.");
+        router.push("/login");
+      }
+    };
+
+    handleCome();
   }, [router]);
 
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem("user");
-    setCurrentPage("dashboard");
+    router.back();
+    toast.success("로그아웃되었습니다!");
   };
 
   const handleUpdateUser = (updatedUser: User) => {

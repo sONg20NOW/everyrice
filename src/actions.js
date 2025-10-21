@@ -53,23 +53,11 @@ export async function createUser({
   }
 }
 
-export async function loginUser(data) {
+export async function getUserByEmail(email) {
   // 실제 환경에서는 비밀번호 해시 비교 로직이 추가되어야 합니다.
   try {
     const userData = await db.user.findUnique({
-      where: { email: data.email },
-      // 보안을 위해 비밀번호 필드는 제외하고 가져오는 것이 좋습니다.
-      select: {
-        id: true,
-        password: true,
-        name: true,
-        department: true,
-        grade: true,
-        email: true,
-        bio: true,
-        avatar: true,
-        preferencesJson: true,
-      },
+      where: { email: email },
     });
 
     if (!userData) {
@@ -83,8 +71,159 @@ export async function loginUser(data) {
     // 명시적 타입 캐스팅이 필요할 수 있습니다.
     return userData;
   } catch (error) {
-    console.error("Login Server Action Error:", error);
+    console.error("get user by id email:", error);
     // 실패 시 null 반환 또는 에러 throw
     throw new Error("로그인 처리 중 서버 오류가 발생했습니다.");
+  }
+}
+
+export async function getUserById(id) {
+  // 실제 환경에서는 비밀번호 해시 비교 로직이 추가되어야 합니다.
+  try {
+    const userData = await db.user.findUnique({
+      where: { id: id },
+    });
+
+    if (!userData) {
+      // 사용자를 찾을 수 없음
+      return null;
+    }
+
+    // (이 부분에 비밀번호 비교 로직이 들어갑니다. 현재는 생략)
+
+    // 타입이 정확하지 않다면 (예: db.user.findUnique의 결과가 User 타입과 정확히 일치하지 않을 때)
+    // 명시적 타입 캐스팅이 필요할 수 있습니다.
+    return userData;
+  } catch (error) {
+    console.error("get user by id error:", error);
+    // 실패 시 null 반환 또는 에러 throw
+    throw new Error("id로 유저를 가져오는 중 서버 오류가 발생했습니다.");
+  }
+}
+
+export async function getTimetableByUserId(userId) {
+  try {
+    // 1. TimeSlot 모델에서 쿼리를 실행합니다.
+    const userTimetable = await db.timeSlot.findMany({
+      where: {
+        // 2. 입력받은 userId와 일치하는 레코드만 필터링합니다.
+        userId: userId,
+      },
+      // 필요하다면, TimeSlot과 연결된 User 정보를 포함할 수도 있습니다.
+      // include: {
+      //   user: true,
+      // }
+    });
+
+    console.log(
+      `Retrieved ${userTimetable.length} time slots for User ID: ${userId}`
+    );
+    return userTimetable;
+  } catch (error) {
+    console.error(`Error fetching timetable for user ${userId}:`, error);
+    // 오류 발생 시 클라이언트 측에서 처리할 수 있도록 에러를 다시 던집니다.
+    throw new Error(`사용자 ID ${userId}의 시간표를 가져오는 데 실패했습니다.`);
+  }
+}
+
+export async function getMatchRequestsToUserId(userId) {
+  try {
+    // 1. Prisma의 OR 조건을 사용하여 fromUserId 또는 toUserId가 일치하는 레코드를 모두 조회합니다.
+    const matchRequests = await db.matchRequest.findMany({
+      where: {
+        OR: [
+          // { fromUserId: userId }, // 사용자가 보낸 요청
+          { toUserId: userId }, // 사용자가 받은 요청
+        ],
+      },
+      // 2. 관계된 사용자 정보를 함께 포함하여 (Eager Loading) N+1 쿼리 문제를 방지합니다.
+      include: {
+        fromUser: {
+          // 요청을 보낸 사용자 정보
+          select: {
+            id: true,
+            name: true,
+            department: true,
+            grade: true,
+            avatar: true,
+          },
+        },
+        toUser: {
+          // 요청을 받은 사용자 정보
+          select: {
+            id: true,
+            name: true,
+            department: true,
+            grade: true,
+            avatar: true,
+          },
+        },
+      },
+      // 3. (선택 사항) 요청 시간을 기준으로 최신순으로 정렬할 수 있습니다.
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    console.log(
+      `Retrieved ${matchRequests.length} match requests to User ID: ${userId}`
+    );
+    return matchRequests;
+  } catch (error) {
+    console.error(`Error fetching match requests for user ${userId}:`, error);
+    throw new Error(
+      `사용자 ID ${userId}의 매칭 요청을 가져오는 데 실패했습니다.`
+    );
+  }
+}
+
+export async function getMatchRequestsFromUserId(userId) {
+  try {
+    // 1. Prisma의 OR 조건을 사용하여 fromUserId 또는 toUserId가 일치하는 레코드를 모두 조회합니다.
+    const matchRequests = await db.matchRequest.findMany({
+      where: {
+        OR: [
+          { fromUserId: userId }, // 사용자가 보낸 요청
+          // { toUserId: userId }, // 사용자가 받은 요청
+        ],
+      },
+      // 2. 관계된 사용자 정보를 함께 포함하여 (Eager Loading) N+1 쿼리 문제를 방지합니다.
+      include: {
+        fromUser: {
+          // 요청을 보낸 사용자 정보
+          select: {
+            id: true,
+            name: true,
+            department: true,
+            grade: true,
+            avatar: true,
+          },
+        },
+        toUser: {
+          // 요청을 받은 사용자 정보
+          select: {
+            id: true,
+            name: true,
+            department: true,
+            grade: true,
+            avatar: true,
+          },
+        },
+      },
+      // 3. (선택 사항) 요청 시간을 기준으로 최신순으로 정렬할 수 있습니다.
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    console.log(
+      `Retrieved ${matchRequests.length} match requests from User ID: ${userId}`
+    );
+    return matchRequests;
+  } catch (error) {
+    console.error(`Error fetching match requests for user ${userId}:`, error);
+    throw new Error(
+      `사용자 ID ${userId}의 매칭 요청을 가져오는 데 실패했습니다.`
+    );
   }
 }

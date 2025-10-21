@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,10 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import {
+  getMatchRequestsFromUserId,
+  getMatchRequestsToUserId,
+} from "@/actions";
 
 interface MatchingProps {
   currentUser: User;
@@ -44,6 +48,8 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const [selectedUserId, setSelectedUserId] = useState(0);
   const [requestMessage, setRequestMessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [receivedRequests, setReceivedRequests] = useState<MatchRequest[]>([]);
+  const [sendedRequests, setSendedRequests] = useState<MatchRequest[]>([]);
 
   useEffect(() => {
     if (currentUser.timetable.length > 0) {
@@ -72,7 +78,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
         toUserId: selectedUserId,
         proposedTime: selectedTimeSlot,
         message: requestMessage,
-        status: "pending",
+        status: "PENDING",
         createdAt: new Date(),
         type: "unidirectional",
       };
@@ -96,19 +102,34 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
     );
   };
 
-  // 샘플 받은 요청 생성
-  const receivedRequests: MatchRequest[] = [
-    {
-      id: 10002,
-      fromUserId: 2,
-      toUserId: currentUser.id,
-      proposedTime: { day: 0, startTime: 12, endTime: 13 },
-      message: "안녕하세요! 같이 점심 드실래요?",
-      status: "pending",
-      createdAt: new Date(),
-      type: "unidirectional",
-    },
-  ];
+  useEffect(() => {
+    const getMatchRequestsToMe = async () => {
+      const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
+      console.log("matchReqestTomMe:", matchRequestsToMe);
+      setReceivedRequests(
+        matchRequestsToMe.map((v) => ({
+          ...v,
+          proposedTime: JSON.parse(v.proposedTimeJson),
+        }))
+      );
+    };
+
+    const getMatchRequestsByMe = async () => {
+      const matchRequestsToMe = await getMatchRequestsFromUserId(
+        currentUser.id
+      );
+      console.log("matchReqestTomMe:", matchRequestsToMe);
+      setSendedRequests(
+        matchRequestsToMe.map((v) => ({
+          ...v,
+          proposedTime: JSON.parse(v.proposedTimeJson),
+        }))
+      );
+    };
+
+    getMatchRequestsToMe();
+    getMatchRequestsByMe();
+  }, [currentUser]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,9 +191,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {receivedRequests.map((request) => {
-                    const fromUser = sampleUsers.find(
-                      (u) => u.id === request.fromUserId
-                    );
+                    const fromUser = request.fromUser;
                     return (
                       <div
                         key={request.id}
@@ -181,6 +200,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
+                              <span className="font-medium">From. </span>
                               <span className="font-medium">
                                 {fromUser?.name}
                               </span>
@@ -194,33 +214,35 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                               {timeToString(request.proposedTime.startTime)} -{" "}
                               {timeToString(request.proposedTime.endTime)}
                             </div>
-                            {request.message && (
-                              <p className="text-sm text-gray-700 bg-white p-2 rounded">
-                                {request.message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex space-x-2 ml-4">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                handleRequestAction(request.id, "accepted")
-                              }
-                              className="bg-green-500 hover:bg-green-600"
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              수락
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleRequestAction(request.id, "rejected")
-                              }
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              거절
-                            </Button>
+                            <div className="flex gap-4 justify-between items-center">
+                              {request.message && (
+                                <p className="text-sm text-gray-700 bg-white p-2 rounded flex-1">
+                                  {request.message}
+                                </p>
+                              )}
+                              <div className="flex space-x-2 ml-4">
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    handleRequestAction(request.id, "accepted")
+                                  }
+                                  className="bg-green-500 hover:bg-green-600"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  수락
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleRequestAction(request.id, "rejected")
+                                  }
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  거절
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -263,6 +285,69 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
               )}
             </div>
           </>
+        )}
+        {/* 보낸 매칭 요청 */}
+        {sendedRequests.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <MessageCircle className="w-5 h-5 mr-2" />
+                내가 보냈던 매칭 요청
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {sendedRequests.map((request) => {
+                const toUser = request.toUser;
+                return (
+                  <div key={request.id} className="bg-blue-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="font-medium">To. </span>
+                          <span className="font-medium">{toUser?.name}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {toUser?.department}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2 flex items-center">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {dayToString(request.proposedTime.day)}{" "}
+                          {timeToString(request.proposedTime.startTime)} -{" "}
+                          {timeToString(request.proposedTime.endTime)}
+                        </div>
+                        <div className="flex gap-4 justify-between items-center">
+                          {request.message && (
+                            <p className="text-sm text-gray-700 bg-white p-2 rounded flex-1">
+                              {request.message}
+                            </p>
+                          )}
+                          {
+                            {
+                              PENDING: (
+                                <p className="text-sm text-white bg-gray-500 p-2 rounded-xl ">
+                                  대기중
+                                </p>
+                              ),
+                              REJECTED: (
+                                <p className="text-sm text-white bg-red-500 p-2 rounded-xl ">
+                                  거절됨
+                                </p>
+                              ),
+                              ACCEPTED: (
+                                <p className="text-sm text-white bg-green-500 p-2 rounded-xl ">
+                                  수락됨
+                                </p>
+                              ),
+                            }[request.status]
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         )}
 
         {/* 매칭 요청 다이얼로그 */}

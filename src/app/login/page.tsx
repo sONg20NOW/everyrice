@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import RegisterDialog from "./_component/RegisterDialog";
-import { loginUser } from "@/actions";
+import { getUserByEmail } from "@/actions";
 
 // 기존 Login/Register 타입을 FormValues 하나로 통합하여 useForm에 사용합니다.
 interface FormValues {
@@ -61,13 +61,13 @@ export default function LoginPage() {
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
-    toast.success("환영합니다!");
+    toast.success(`환영합니다, ${user.name}님!`);
     router.push("/");
   };
 
   // 폼 제출 핸들러
   const onSubmit = async (data: FormValues) => {
-    const userData: User = await loginUser(data);
+    const userData: User = await getUserByEmail(data.email);
 
     console.log(userData);
     if (userData) {

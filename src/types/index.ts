@@ -26,16 +26,17 @@ export interface User {
 export interface MatchRequest {
   id: number;
   fromUserId: number;
+  fromUser: User;
   toUserId: number;
+  toUser: User;
   proposedTime: {
     day: number;
     startTime: number;
     endTime: number;
   };
   message?: string;
-  status: "pending" | "accepted" | "rejected";
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
   createdAt: Date;
-  type: "bidirectional" | "unidirectional"; // 양방향/단방향
 }
 
 export interface FreeTimeSlot {

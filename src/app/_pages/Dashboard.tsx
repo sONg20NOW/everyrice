@@ -34,6 +34,7 @@ import {
   Sun,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getMatchRequestsToUserId, getUserById } from "@/actions";
 
 interface MealType {
   type: string;
@@ -64,35 +65,26 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
     foodType: "",
   });
 
+  useEffect(() => {
+    const getMatchRequests = async () => {
+      const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
+      console.log("matchReqestTomMe:", matchRequestsToMe);
+      setMatchRequests(
+        matchRequestsToMe.map((v) => ({
+          ...v,
+          proposedTime: JSON.parse(v.proposedTimeJson),
+        }))
+      );
+    };
+
+    getMatchRequests();
+  }, [currentUser]);
+
   const freeTime = calculateFreeTime(currentUser.timetable);
   const totalFreeHours = freeTime.reduce(
     (sum, slot) => sum + (slot.endTime - slot.startTime),
     0
   );
-
-  // 샘플 매칭 요청 데이터
-  const sampleMatchRequests: MatchRequest[] = [
-    {
-      id: "req1",
-      fromUserId: "2",
-      toUserId: currentUser.id,
-      proposedTime: { day: 0, startTime: 12, endTime: 13 },
-      message: "안녕하세요! 같이 점심 드실래요?",
-      status: "pending",
-      createdAt: new Date(),
-      type: "unidirectional",
-    },
-    {
-      id: "req2",
-      fromUserId: "3",
-      toUserId: currentUser.id,
-      proposedTime: { day: 2, startTime: 18, endTime: 19 },
-      message: "저녁 같이 먹어요~",
-      status: "pending",
-      createdAt: new Date(),
-      type: "unidirectional",
-    },
-  ];
 
   // 시간대별 식사 타입 결정 (겹치는 모든 식사시간대 반환)
   const getMealTypes = (startTime: number, endTime: number): MealType[] => {
@@ -285,7 +277,7 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
-                {sampleMatchRequests.length}개
+                {matchRequests.length}개
               </div>
               <p className="text-xs text-gray-500 mt-1">대기 중인 요청</p>
             </CardContent>
@@ -293,7 +285,7 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
         </div>
 
         {/* 받은 매칭 요청 미리보기 */}
-        {sampleMatchRequests.length > 0 && (
+        {matchRequests.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -313,10 +305,8 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {sampleMatchRequests.slice(0, 2).map((request) => {
-                  const fromUser = sampleUsers.find(
-                    (u) => u.id === request.fromUserId
-                  );
+                {matchRequests.slice(0, 2).map((request) => {
+                  const fromUser = request.fromUser;
                   return (
                     <div key={request.id} className="bg-blue-50 p-3 rounded-lg">
                       <div className="flex items-center justify-between">
