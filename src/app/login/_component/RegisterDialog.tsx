@@ -1,3 +1,4 @@
+import { createUser } from "@/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,8 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCallback } from "react";
-import { useForm } from "react-hook-form";
+import { User } from "@/types";
+import { useCallback, useState } from "react";
+import { useForm, Controller } from "react-hook-form"; // Controller 추가 임포트
+import { toast } from "sonner";
+
+// 🚨 주의: isSubmitting 상태를 관리하려면 Dialog를 닫는 로직도 수정해야 합니다.
 
 interface RegisterFormType {
   name: string;
@@ -43,21 +48,55 @@ const departments = [
 ];
 
 export default function RegisterDialog() {
+  // Dialog 열림/닫힘 상태를 관리하여 가입 성공 시 닫도록 합니다.
+  const [open, setOpen] = useState(false);
+
   const {
     register,
+    control, // Controller 사용을 위해 control을 가져옵니다.
     handleSubmit,
+    reset,
     formState: { isDirty, isSubmitting, errors },
-  } = useForm<RegisterFormType>();
+  } = useForm<RegisterFormType>({
+    // 기본값 설정 (Select 컴포넌트가 제어 모드에서 오류를 방지하도록)
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      department: "",
+      grade: "",
+    },
+  });
 
-  const onRegister = useCallback((data: RegisterFormType) => {
-    console.log("Register data:", data);
+  const onRegister = useCallback(
+    async (data: RegisterFormType) => {
+      try {
+        // createUser 함수가 grade를 Int로 변환할 것으로 가정합니다.
+        // 만약 그렇지 않다면 여기서 data.grade = parseInt(data.grade, 10); 변환이 필요합니다.
+        const newUser: User = await createUser(data);
 
-    return null;
-  }, []);
+        console.log("Registration successful:", newUser);
+
+        // 성공적으로 사용자 생성 후 Dialog를 닫고 폼을 초기화합니다.
+        toast.success("회원가입이 완료되었습니다!");
+        setOpen(false);
+        reset();
+
+        return newUser;
+      } catch (error) {
+        console.error("Registration failed:", error);
+        // 사용자에게 오류 메시지를 표시하는 로직을 여기에 추가할 수 있습니다.
+        throw error; // isSubmitting 상태가 적절히 해제되도록 에러를 다시 던집니다.
+      }
+    },
+    [reset]
+  );
 
   return (
-    <Dialog>
-      <DialogTrigger>회원가입으로 지금 바로 합류!</DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>회원가입으로 지금 바로 합류!</Button>
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>회원가입</DialogTitle>
@@ -69,6 +108,7 @@ export default function RegisterDialog() {
           onSubmit={handleSubmit(onRegister)}
           className="w-full flex flex-col w-full gap-2 items-center"
         >
+          {/* 이름 필드 (Input은 register 사용) */}
           <div className="space-y-2 w-full">
             <Label htmlFor="name">이름</Label>
             <Input
@@ -81,47 +121,69 @@ export default function RegisterDialog() {
             />
             {errors.name && <ErrorMessage message={errors.name.message!} />}
           </div>
+
+          {/* 학과 필드 (Controller 사용) */}
           <div className="space-y-2 w-full">
             <Label htmlFor="department">학과</Label>
-            <Select
-              {...register("department", {
-                required: "학과는 필수 입력입니다.",
-              })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="학과를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              name="department"
+              control={control}
+              rules={{ required: "학과는 필수 입력입니다." }}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  name={field.name}
+                  // field.onBlur는 Select 컴포넌트에서는 일반적으로 사용되지 않습니다.
+                  // 필요하다면 SelectTrigger에 추가할 수 있습니다.
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="학과를 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.department && (
               <ErrorMessage message={errors.department.message!} />
             )}
           </div>
+
+          {/* 학년 필드 (Controller 사용) */}
           <div className="space-y-2 w-full">
             <Label htmlFor="year">학년</Label>
-            <Select
-              {...register("grade", {
-                required: "학년은 필수 입력입니다.",
-              })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="학년을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1학년</SelectItem>
-                <SelectItem value="2">2학년</SelectItem>
-                <SelectItem value="3">3학년</SelectItem>
-                <SelectItem value="4">4학년</SelectItem>
-              </SelectContent>
-            </Select>
+            <Controller
+              name="grade"
+              control={control}
+              rules={{ required: "학년은 필수 입력입니다." }}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  name={field.name}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="학년을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1학년</SelectItem>
+                    <SelectItem value="2">2학년</SelectItem>
+                    <SelectItem value="3">3학년</SelectItem>
+                    <SelectItem value="4">4학년</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.grade && <ErrorMessage message={errors.grade.message!} />}
           </div>
+
+          {/* 이메일 필드 (Input은 register 사용) */}
           <div className="space-y-2 w-full">
             <Label htmlFor="email">이메일</Label>
             <Input
@@ -138,6 +200,8 @@ export default function RegisterDialog() {
             />
             {errors.email && <ErrorMessage message={errors.email.message!} />}
           </div>
+
+          {/* 비밀번호 필드 (Input은 register 사용) */}
           <div className="space-y-2 w-full">
             <Label htmlFor="password">비밀번호</Label>
             <Input
@@ -152,16 +216,20 @@ export default function RegisterDialog() {
               <ErrorMessage message={errors.password.message!} />
             )}
           </div>
+
           <DialogFooter>
             <Button
               type="submit"
               className="w-fit bg-red-500 hover:bg-red-600"
-              disabled={!isDirty || isSubmitting}
+              // isSubmitting 상태를 버튼 비활성화에 사용합니다.
+              disabled={isSubmitting || !isDirty}
             >
-              가입
+              {isSubmitting ? "가입 중..." : "가입"}
             </Button>
             <DialogClose asChild>
-              <Button>취소</Button>
+              <Button type="button" variant="outline">
+                취소
+              </Button>
             </DialogClose>
           </DialogFooter>
         </form>

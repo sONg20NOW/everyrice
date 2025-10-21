@@ -92,7 +92,7 @@ export default function LoginPage() {
   // 폼 제출 핸들러
   const onSubmit = (data: FormValues) => {
     const userData: User = {
-      id: Date.now().toString(),
+      id: Date.now(),
       name: data.name,
       email: data.email,
       department: data.department,
