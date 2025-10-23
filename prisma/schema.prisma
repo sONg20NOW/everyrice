@@ -25,12 +25,6 @@ enum MatchStatus {
   REJECTED
 }
 
-// 매칭 요청 타입
-enum MatchType {
-  BIDIRECTIONAL // 양방향
-  UNIDIRECTIONAL // 단방향
-}
-
 // ----------------------------------------------------
 // 2. Main Models
 // ----------------------------------------------------

@@ -40,7 +40,7 @@ export default function Home() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem("user");
-    router.back();
+    router.push("/login");
     toast.success("로그아웃되었습니다!");
   };
 

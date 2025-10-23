@@ -1,4 +1,4 @@
-import { createUser } from "@/actions";
+import { createUser, getUserByEmail } from "@/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User } from "@/types";
-import { useCallback, useState } from "react";
+import emailjs from "@emailjs/browser";
+import { useCallback, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form"; // Controller 추가 임포트
 import { toast } from "sonner";
 
@@ -50,13 +51,22 @@ const departments = [
 export default function RegisterDialog() {
   // Dialog 열림/닫힘 상태를 관리하여 가입 성공 시 닫도록 합니다.
   const [open, setOpen] = useState(false);
+  const authcode = useRef(
+    (Date.now() + Math.round(Math.random() * 1000)).toString()
+  );
+
+  const [authentication, setAuthentication] = useState(false);
+  const [emailSended, setEmailSended] = useState(false);
+
+  const authcodeRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     control, // Controller 사용을 위해 control을 가져옵니다.
     handleSubmit,
     reset,
-    formState: { isDirty, isSubmitting, errors },
+    getValues,
+    formState: { isDirty, isSubmitting, errors, isValid },
   } = useForm<RegisterFormType>({
     // 기본값 설정 (Select 컴포넌트가 제어 모드에서 오류를 방지하도록)
     defaultValues: {
@@ -92,10 +102,48 @@ export default function RegisterDialog() {
     [reset]
   );
 
+  const onSendCode = useCallback(
+    async (data: RegisterFormType) => {
+      try {
+        if (await getUserByEmail(data.email)) {
+          toast.error("이미 해당 이메일로 등록된 유저가 있습니다!");
+
+          return;
+        }
+
+        emailjs.init({ publicKey: "BdDrGjg64GHBOjQhc" });
+
+        emailjs.send("everyrice", "template_5hfawhb", {
+          name: data.name,
+          authCode: authcode.current,
+          email: data.email,
+        });
+
+        toast.info("인증코드가 전송되었습니다! 이메일을 확인해주세요!");
+        setEmailSended(true);
+      } catch (e) {
+        console.error("이메일 인증 에러!", e);
+      }
+    },
+    [authcode]
+  );
+
+  const onCheckCode = useCallback(
+    (usercode: string) => {
+      if (usercode === authcode.current) {
+        toast.success("인증이 완료되었습니다!");
+        setAuthentication(true);
+      } else {
+        toast.error("코드가 일치하지 않습니다!");
+      }
+    },
+    [authcode]
+  );
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>회원가입으로 지금 바로 합류!</Button>
+        <Button className="w-fit">회원가입으로 지금 바로 합류!</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -217,12 +265,43 @@ export default function RegisterDialog() {
             )}
           </div>
 
+          {/* 비밀번호 필드 (Input은 register 사용) */}
+          <div className="space-y-2 w-full">
+            <Label htmlFor="authcode">인증 코드</Label>
+            <div className="flex gap-2">
+              <Input
+                ref={authcodeRef}
+                id="authcode"
+                type="text"
+                placeholder="이메일 인증을 진행해주세요."
+              />
+              <Button
+                type="button"
+                variant={"destructive"}
+                onClick={() => onSendCode(getValues())}
+                disabled={!isValid}
+              >
+                전송
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (authcodeRef.current)
+                    onCheckCode(authcodeRef.current.value);
+                }}
+                disabled={!isValid || !emailSended}
+              >
+                확인
+              </Button>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button
               type="submit"
               className="w-fit bg-red-500 hover:bg-red-600"
               // isSubmitting 상태를 버튼 비활성화에 사용합니다.
-              disabled={isSubmitting || !isDirty}
+              disabled={isSubmitting || !isDirty || !authentication}
             >
               {isSubmitting ? "가입 중..." : "가입"}
             </Button>

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import RegisterDialog from "./_component/RegisterDialog";
 import { getUserByEmail } from "@/actions";
+import ResetPasswordDialog from "./_component/ResetPasswordDialog";
 
 // 기존 Login/Register 타입을 FormValues 하나로 통합하여 useForm에 사용합니다.
 interface FormValues {
@@ -170,8 +171,9 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-gray-500">
+        <div className="flex flex-col items-center">
           <RegisterDialog />
+          <ResetPasswordDialog />
         </div>
       </div>
     </div>
