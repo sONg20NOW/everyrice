@@ -242,6 +242,46 @@ export async function getMatchRequestsFromUserId(userId) {
 }
 
 /**
+ * 특정 사용자와 관련된 모든 MatchRequest를 조회합니다.
+ * 사용자가 요청을 보냈거나(fromUserId) 받았던(toUserId) 모든 매칭을 반환합니다.
+ * * @param {number} userId - 매칭 요청을 조회할 사용자의 ID
+ * @returns {Promise<Array<object>>} 관련 MatchRequest 배열
+ */
+export async function getAllMatchRequestsForUser(userId) {
+  // Prisma의 OR 연산자를 사용하여 fromUserId 또는 toUserId가 일치하는 모든 요청을 조회합니다.
+  const matches = await db.matchRequest.findMany({
+    where: {
+      OR: [{ fromUserId: userId }, { toUserId: userId }],
+    },
+    // 요청과 관련된 사용자 정보를 함께 가져옵니다 (필수: UI 표시용)
+    include: {
+      fromUser: {
+        select: {
+          id: true,
+          name: true,
+          department: true,
+          grade: true,
+          bio: true,
+          avatar: true,
+        },
+      },
+      toUser: {
+        select: {
+          id: true,
+          name: true,
+          department: true,
+          grade: true,
+          bio: true,
+          avatar: true,
+        },
+      },
+    },
+  });
+
+  return matches;
+}
+
+/**
  * 1. timetable을 제외한 사용자 기본 정보를 업데이트합니다.
  * @param {number} userId - 업데이트할 사용자의 ID
  * @param {object} updates - name, bio, preferences 등 timetable을 제외한 일반 필드
