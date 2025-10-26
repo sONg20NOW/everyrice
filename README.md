@@ -38,7 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Prisma
 
 npx prisma migrate dev --name init
-npx prissma generate
+npx prisma generate
 
 ### HOW TO SEED DATA
 
