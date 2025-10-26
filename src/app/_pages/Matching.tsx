@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +21,21 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  ChevronUpCircleIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
-  getMatchRequestsFromUserId,
-  getMatchRequestsToUserId,
+  createMatchRequest,
+  getAllMatchRequestsForUser,
+  getUserById,
   getUsersExceptUserId,
+  updateMatchStatus,
 } from "@/actions";
+
+import dayjs from "dayjs";
 
 interface MatchingProps {
   currentUser: User;
@@ -44,8 +53,29 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const [selectedUserId, setSelectedUserId] = useState(0);
   const [requestMessage, setRequestMessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [receivedRequests, setReceivedRequests] = useState<MatchRequest[]>([]);
-  const [sendedRequests, setSendedRequests] = useState<MatchRequest[]>([]);
+  const [regardingRequests, setRegardingRequests] = useState<MatchRequest[]>(
+    []
+  );
+
+  const [matchSort, setMatchSort] = useState(true);
+
+  const receivedRequests = regardingRequests.filter(
+    (v) => v.toUserId === currentUser.id && v.status === "PENDING"
+  );
+
+  const [page, setPage] = useState(0);
+
+  const filteredMatches = matches.filter(
+    (match) =>
+      match.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      match.user.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSendRequest = (userId: number, timeSlot: FreeTimeSlot) => {
+    setSelectedUserId(userId);
+    setSelectedTimeSlot(timeSlot);
+    setIsDialogOpen(true);
+  };
 
   useEffect(() => {
     const getUsers = async () => {
@@ -69,32 +99,34 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
     }
   }, [currentUser, users]);
 
-  const filteredMatches = matches.filter(
-    (match) =>
-      match.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      match.user.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getEveryMatchRequestsAboutMe = useCallback(async () => {
+    const matchRequestsAboutMe = await getAllMatchRequestsForUser(
+      currentUser.id
+    );
 
-  const handleSendRequest = (userId: number, timeSlot: FreeTimeSlot) => {
-    setSelectedUserId(userId);
-    setSelectedTimeSlot(timeSlot);
-    setIsDialogOpen(true);
-  };
+    console.log("matchRequestsAboutMe:", matchRequestsAboutMe);
+    setRegardingRequests(
+      matchRequestsAboutMe.map((v) => ({
+        ...v,
+        proposedTime: JSON.parse(v.proposedTimeJson),
+      }))
+    );
+  }, [currentUser.id]);
 
-  const submitRequest = () => {
+  useEffect(() => {
+    getEveryMatchRequestsAboutMe();
+  }, [currentUser, selectedTimeSlot, getEveryMatchRequestsAboutMe]);
+
+  const submitRequest = async () => {
     if (selectedTimeSlot && selectedUserId) {
-      const newRequest: MatchRequest = {
-        id: Date.now(),
-        fromUserId: currentUser.id,
-        toUserId: selectedUserId,
-        proposedTime: selectedTimeSlot,
-        message: requestMessage,
-        status: "PENDING",
-        createdAt: new Date(),
-        type: "unidirectional",
-      };
+      await createMatchRequest(
+        await getUserById(selectedUserId).then((v) => v.id),
+        currentUser.id,
+        JSON.stringify(selectedTimeSlot),
+        requestMessage
+      );
 
-      setMatchRequests([...matchRequests, newRequest]);
+      // setMatchRequests([...matchRequests, newRequest]);
       setIsDialogOpen(false);
       setRequestMessage("");
       setSelectedTimeSlot(null);
@@ -102,45 +134,18 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
     }
   };
 
-  const handleRequestAction = (
+  const handleRequestAction = async (
     requestId: number,
-    action: "accepted" | "rejected"
+    status: "ACCEPTED" | "REJECTED"
   ) => {
-    setMatchRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId ? { ...req, status: action } : req
-      )
-    );
+    const response = await updateMatchStatus(requestId, status);
+
+    console.log("status updated:", response);
+
+    getEveryMatchRequestsAboutMe();
+
+    return;
   };
-
-  useEffect(() => {
-    const getMatchRequestsToMe = async () => {
-      const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
-      console.log("matchReqestToMe:", matchRequestsToMe);
-      setReceivedRequests(
-        matchRequestsToMe.map((v) => ({
-          ...v,
-          proposedTime: JSON.parse(v.proposedTimeJson),
-        }))
-      );
-    };
-
-    const getMatchRequestsByMe = async () => {
-      const matchRequestsToMe = await getMatchRequestsFromUserId(
-        currentUser.id
-      );
-      console.log("matchReqestByMe:", matchRequestsToMe);
-      setSendedRequests(
-        matchRequestsToMe.map((v) => ({
-          ...v,
-          proposedTime: JSON.parse(v.proposedTimeJson),
-        }))
-      );
-    };
-
-    getMatchRequestsToMe();
-    getMatchRequestsByMe();
-  }, [currentUser]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -210,14 +215,23 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className="font-medium">From. </span>
-                              <span className="font-medium">
-                                {fromUser?.name}
+                            <div className="flex items-center space-x-2 mb-2 justify-between">
+                              <span className="font-medium flex gap-3">
+                                <div>
+                                  {fromUser?.name}
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {fromUser?.department}
+                                  </Badge>
+                                </div>
+                                <ArrowRightIcon /> {"나"}
                               </span>
-                              <Badge variant="secondary" className="text-xs">
-                                {fromUser?.department}
-                              </Badge>
+                              <span className="text-sm">
+                                {dayjs(request.createdAt).format("YYYY-MM-DD")}{" "}
+                                생성됨
+                              </span>
                             </div>
                             <div className="text-sm text-gray-600 mb-2 flex items-center">
                               <Clock className="w-4 h-4 mr-1" />
@@ -235,7 +249,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                                 <Button
                                   size="sm"
                                   onClick={() =>
-                                    handleRequestAction(request.id, "accepted")
+                                    handleRequestAction(request.id, "ACCEPTED")
                                   }
                                   className="bg-green-500 hover:bg-green-600"
                                 >
@@ -246,7 +260,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                                   size="sm"
                                   variant="outline"
                                   onClick={() =>
-                                    handleRequestAction(request.id, "rejected")
+                                    handleRequestAction(request.id, "REJECTED")
                                   }
                                 >
                                   <XCircle className="w-4 h-4 mr-1" />
@@ -263,7 +277,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
               </Card>
             )}
 
-            {/* 매칭 결과 */}
+            {/* 추천 매칭 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -284,79 +298,145 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {filteredMatches.map((match) => (
-                    <MatchingCard
-                      key={match.user.id}
-                      match={match}
-                      onSendRequest={handleSendRequest}
-                    />
-                  ))}
+                <div className="flex flex-col gap-5 items-center">
+                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredMatches.slice(0, 2 * (page + 1)).map((match) => (
+                      <MatchingCard
+                        key={match.user.id}
+                        match={match}
+                        onSendRequest={handleSendRequest}
+                      />
+                    ))}
+                  </div>
+                  {filteredMatches.length >= 2 * (page + 1) ? (
+                    <Button
+                      type="button"
+                      className="w-fit"
+                      variant={"ghost"}
+                      onClick={() => setPage((prev) => prev + 1)}
+                    >
+                      더보기
+                    </Button>
+                  ) : (
+                    <div className="flex flex-col gap-5 items-center">
+                      <span>모든 추천 매칭을 불러왔습니다.</span>
+                      <Button
+                        type="button"
+                        className="w-fit"
+                        variant={"outline"}
+                        onClick={() => setPage(0)}
+                      >
+                        접기
+                        <ChevronUpCircleIcon />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </>
         )}
-        {/* 보낸 매칭 요청 */}
-        {sendedRequests.length > 0 && (
+        {/* 매칭 성사 기록 */}
+        {regardingRequests.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <MessageCircle className="w-5 h-5 mr-2" />
-                내가 보냈던 매칭 요청
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex gap-1">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  전체 매칭 기록
+                </div>
+                <Button
+                  variant={"outline"}
+                  className="flex gap-1 text-sm font-normal"
+                  onClick={() => setMatchSort((prev) => !prev)}
+                >
+                  {matchSort ? (
+                    <>
+                      <span>오래된순</span>
+                      <ChevronUp />
+                    </>
+                  ) : (
+                    <>
+                      <span>최신순</span>
+                      <ChevronDown />
+                    </>
+                  )}
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {sendedRequests.map((request) => {
-                const toUser = request.toUser;
-                return (
-                  <div key={request.id} className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-medium">To. </span>
-                          <span className="font-medium">{toUser?.name}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {toUser?.department}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2 flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {dayToString(request.proposedTime.day)}{" "}
-                          {timeToString(request.proposedTime.startTime)} -{" "}
-                          {timeToString(request.proposedTime.endTime)}
-                        </div>
-                        <div className="flex gap-4 justify-between items-center">
-                          {request.message && (
-                            <p className="text-sm text-gray-700 bg-white p-2 rounded flex-1">
-                              {request.message}
-                            </p>
-                          )}
-                          {
+              {regardingRequests
+                .toSorted(
+                  (a, b) =>
+                    (Number(a.createdAt) - Number(b.createdAt)) *
+                    (matchSort ? 1 : -1)
+                )
+                .map((request) => {
+                  const toUser = request.toUser;
+                  const fromUser = request.fromUser;
+
+                  return (
+                    <div key={request.id} className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2 justify-between">
+                            <span className="font-medium flex gap-3">
+                              <div>
+                                {fromUser?.name}
+                                <Badge variant="secondary" className="text-xs">
+                                  {fromUser?.department}
+                                </Badge>
+                              </div>
+                              <ArrowRightIcon />{" "}
+                              <div>
+                                {toUser?.name}
+                                <Badge variant="secondary" className="text-xs">
+                                  {toUser?.department}
+                                </Badge>
+                              </div>
+                            </span>
+                            <span className="text-sm">
+                              {dayjs(request.createdAt).format("YYYY-MM-DD")}{" "}
+                              생성됨
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 mb-2 flex items-center">
+                            <Clock className="w-4 h-4 mr-1" />
+                            {dayToString(request.proposedTime.day)}{" "}
+                            {timeToString(request.proposedTime.startTime)} -{" "}
+                            {timeToString(request.proposedTime.endTime)}
+                          </div>
+                          <div className="flex gap-4 justify-between items-center">
+                            {request.message && (
+                              <p className="text-sm text-gray-700 bg-white p-2 rounded flex-1">
+                                {request.message}
+                              </p>
+                            )}
                             {
-                              PENDING: (
-                                <p className="text-sm text-white bg-gray-500 p-2 rounded-xl ">
-                                  대기중
-                                </p>
-                              ),
-                              REJECTED: (
-                                <p className="text-sm text-white bg-red-500 p-2 rounded-xl ">
-                                  거절됨
-                                </p>
-                              ),
-                              ACCEPTED: (
-                                <p className="text-sm text-white bg-green-500 p-2 rounded-xl ">
-                                  수락됨
-                                </p>
-                              ),
-                            }[request.status]
-                          }
+                              {
+                                PENDING: (
+                                  <p className="text-sm text-white bg-gray-500 p-2 rounded-xl ">
+                                    대기중
+                                  </p>
+                                ),
+                                REJECTED: (
+                                  <p className="text-sm text-white bg-red-500 p-2 rounded-xl ">
+                                    거절됨
+                                  </p>
+                                ),
+                                ACCEPTED: (
+                                  <p className="text-sm text-white bg-green-500 p-2 rounded-xl ">
+                                    수락됨
+                                  </p>
+                                ),
+                              }[request.status]
+                            }
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </CardContent>
           </Card>
         )}

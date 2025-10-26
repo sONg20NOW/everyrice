@@ -89,7 +89,7 @@ model MatchRequest {
   proposedTimeJson String        @map("proposedTime") 
 
   message         String?
-  status          MatchStatus
+  status          MatchStatus   @default(PENDING)
   createdAt       DateTime      @default(now())
 
   @@index([fromUserId])

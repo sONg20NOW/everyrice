@@ -53,11 +53,36 @@ export async function createUser({
   }
 }
 
+export async function createMatchRequest(
+  toUserId,
+  fromUserId,
+  proposedTimeJson,
+  message
+) {
+  const newMatch = db.matchRequest.create({
+    data: {
+      fromUserId: fromUserId,
+      toUserId: toUserId,
+      proposedTimeJson: proposedTimeJson,
+      message: message,
+      status: "PENDING",
+    },
+  });
+
+  return newMatch;
+}
+
+// 시간표가 등록되어 있는 경우에만 사용자에게 표시
 export async function getUsersExceptUserId(userId) {
   try {
     const users = await db.user.findMany({
-      where: { id: { not: userId } },
+      where: { id: { not: userId }, timetable: { some: {} } }, // TimeSlot 데이터를 함께 가져와야 매칭 알고리즘에서 사용할 수 있습니다.
+      include: {
+        timetable: true,
+      },
     });
+
+    console.log("get users:", users);
 
     return users ?? [];
   } catch (e) {
@@ -148,6 +173,7 @@ export async function getMatchRequestsToUserId(userId) {
           // { fromUserId: userId }, // 사용자가 보낸 요청
           { toUserId: userId }, // 사용자가 받은 요청
         ],
+        status: "PENDING",
       },
       // 2. 관계된 사용자 정보를 함께 포함하여 (Eager Loading) N+1 쿼리 문제를 방지합니다.
       include: {
@@ -350,4 +376,13 @@ export async function setUserTimetable(userId, newTimetable) {
   });
 
   return updatedUser;
+}
+
+export async function updateMatchStatus(matchId, status) {
+  const updatedMatches = await db.matchRequest.update({
+    where: { id: matchId },
+    data: { status: status },
+  });
+
+  return updatedMatches;
 }
