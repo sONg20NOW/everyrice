@@ -21,10 +21,11 @@ export const calculateFreeTime = (timetable: TimeSlot[]): FreeTimeSlot[] => {
   const dayStart = 9; // 9시부터
   const dayEnd = 18; // 18시까지
 
+
   for (let day = 0; day < 5; day++) {
-    const daySlots = timetable
+    const daySlots = timetable?
       .filter((slot) => slot.day === day)
-      .sort((a, b) => a.startTime - b.startTime);
+      .sort((a, b) => a.startTime - b.startTime) ?? [];
 
     let currentTime = dayStart;
 
@@ -133,151 +134,4 @@ export const generateMatches = (
     }))
     .filter((match) => match.commonFreeTime.length > 0)
     .sort((a, b) => b.matchScore - a.matchScore);
-};
-
-// 샘플 데이터 생성
-export const generateSampleUsers = (): User[] => {
-  return [
-    {
-      id: 1,
-      name: "김철수",
-      department: "컴퓨터공학과",
-      grade: 3,
-      email: "kim@example.com",
-      bio: "맛집 탐방을 좋아합니다!",
-      timetable: [
-        {
-          id: 100001,
-          day: 0,
-          startTime: 9,
-          endTime: 10.5,
-          subject: "데이터구조",
-          location: "공학관 201",
-        },
-        {
-          id: 100002,
-          day: 0,
-          startTime: 13,
-          endTime: 14.5,
-          subject: "알고리즘",
-          location: "공학관 301",
-        },
-        {
-          id: 100003,
-          day: 2,
-          startTime: 10,
-          endTime: 11.5,
-          subject: "운영체제",
-          location: "공학관 202",
-        },
-        {
-          id: 100004,
-          day: 4,
-          startTime: 14,
-          endTime: 15.5,
-          subject: "네트워크",
-          location: "공학관 401",
-        },
-      ],
-      preferences: {
-        mealTimes: [12, 13, 18],
-        locations: ["학생회관", "기숙사 식당"],
-        foodTypes: ["한식", "중식", "양식"],
-      },
-    },
-    {
-      id: 2,
-      name: "이영희",
-      department: "컴퓨터공학과",
-      grade: 2,
-      email: "lee@example.com",
-      bio: "새로운 사람들과 만나는 것을 좋아해요",
-      timetable: [
-        {
-          id: 200001,
-          day: 1,
-          startTime: 9,
-          endTime: 10.5,
-          subject: "프로그래밍",
-          location: "공학관 101",
-        },
-        {
-          id: 200002,
-          day: 1,
-          startTime: 14,
-          endTime: 15.5,
-          subject: "수학",
-          location: "자연관 201",
-        },
-        {
-          id: 200003,
-          day: 3,
-          startTime: 11,
-          endTime: 12.5,
-          subject: "물리학",
-          location: "자연관 301",
-        },
-        {
-          id: 200004,
-          day: 4,
-          startTime: 9,
-          endTime: 10.5,
-          subject: "영어",
-          location: "인문관 101",
-        },
-      ],
-      preferences: {
-        mealTimes: [12, 13, 17.5],
-        locations: ["학생회관", "카페테리아"],
-        foodTypes: ["한식", "일식", "분식"],
-      },
-    },
-    {
-      id: 3,
-      name: "박민수",
-      department: "경영학과",
-      grade: 4,
-      email: "park@example.com",
-      bio: "졸업 전에 많은 사람들과 인연을 만들고 싶습니다",
-      timetable: [
-        {
-          id: 300001,
-          day: 0,
-          startTime: 11,
-          endTime: 12.5,
-          subject: "경영전략",
-          location: "경영관 301",
-        },
-        {
-          id: 300002,
-          day: 2,
-          startTime: 9,
-          endTime: 10.5,
-          subject: "마케팅",
-          location: "경영관 201",
-        },
-        {
-          id: 300003,
-          day: 2,
-          startTime: 15,
-          endTime: 16.5,
-          subject: "회계학",
-          location: "경영관 401",
-        },
-        {
-          id: 300004,
-          day: 4,
-          startTime: 13,
-          endTime: 14.5,
-          subject: "조직행동론",
-          location: "경영관 501",
-        },
-      ],
-      preferences: {
-        mealTimes: [12.5, 18],
-        locations: ["학생회관", "외부 식당"],
-        foodTypes: ["양식", "일식", "카페"],
-      },
-    },
-  ];
 };

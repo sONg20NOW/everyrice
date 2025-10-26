@@ -53,6 +53,19 @@ export async function createUser({
   }
 }
 
+export async function getUsersExceptUserId(userId) {
+  try {
+    const users = await db.user.findMany({
+      where: { id: { not: userId } },
+    });
+
+    return users ?? [];
+  } catch (e) {
+    console.error("get users:", e);
+    throw new Error("사용자들을 가져오는 중 에러 발생");
+  }
+}
+
 export async function getUserByEmail(email) {
   // 실제 환경에서는 비밀번호 해시 비교 로직이 추가되어야 합니다.
   try {

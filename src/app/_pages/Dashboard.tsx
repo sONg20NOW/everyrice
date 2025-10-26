@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import Timetable from "@/components/Timetable";
 import { User, TimeSlot, MatchRequest, FreeTimeSlot } from "@/types";
-import { generateSampleUsers, calculateFreeTime } from "@/lib/timetable";
+import { calculateFreeTime } from "@/lib/timetable";
 import {
   Plus,
   Clock,
@@ -34,7 +34,11 @@ import {
   Sun,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getMatchRequestsToUserId, getUserById } from "@/actions";
+import {
+  getMatchRequestsToUserId,
+  getUserById,
+  getUsersExceptUserId,
+} from "@/actions";
 
 interface MealType {
   type: string;
@@ -52,7 +56,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
-  const [sampleUsers] = useState(() => generateSampleUsers());
+  const [users, setUsers] = useState<User[]>([]);
   const [matchRequests, setMatchRequests] = useState<MatchRequest[]>([]);
   const [isCreateMatchOpen, setIsCreateMatchOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<FreeTimeSlot | null>(
@@ -66,9 +70,24 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
   });
 
   useEffect(() => {
+    const getUsers = async () => {
+      const usersResponse = await getUsersExceptUserId(currentUser.id);
+
+      setUsers(
+        usersResponse.map((v) => ({
+          ...v,
+          preferences: JSON.parse(v.preferencesJson),
+        }))
+      );
+    };
+
+    getUsers();
+  }, [currentUser]);
+
+  useEffect(() => {
     const getMatchRequests = async () => {
       const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
-      console.log("matchReqestTomMe:", matchRequestsToMe);
+      console.log("matchReqestToMe:", matchRequestsToMe);
       setMatchRequests(
         matchRequestsToMe.map((v) => ({
           ...v,
@@ -80,7 +99,7 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
     getMatchRequests();
   }, [currentUser]);
 
-  const freeTime = calculateFreeTime(currentUser.timetable);
+  const freeTime = calculateFreeTime(currentUser.timetable ?? []);
   const totalFreeHours = freeTime.reduce(
     (sum, slot) => sum + (slot.endTime - slot.startTime),
     0
@@ -255,7 +274,7 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {sampleUsers.length}명
+                {users.length}명
               </div>
               <p className="text-xs text-gray-500 mt-1">현재 활성 사용자</p>
             </CardContent>

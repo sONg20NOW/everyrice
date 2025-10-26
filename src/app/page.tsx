@@ -14,6 +14,9 @@ import {
   setUserTimetable,
   updateUserProfile,
 } from "@/actions";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 export default function Home() {
   const router = useRouter();
@@ -50,6 +53,10 @@ export default function Home() {
     toast.success("로그아웃되었습니다!");
   };
 
+  useEffect(() => {
+    console.log("currentUser updated:", JSON.stringify(currentUser));
+  }, [currentUser]);
+
   const handleUpdateUser = async (updates: User) => {
     const currentUserId = Number(localStorage.getItem("userId"));
 
@@ -60,10 +67,13 @@ export default function Home() {
     }
     const { id: userId, timetable, ...userData } = updates;
 
-    const updatedUserData = await updateUserProfile(currentUserId, userData);
-    const updatedTimetable = await setUserTimetable(currentUserId, timetable);
+    await updateUserProfile(currentUserId, userData);
+    const updatedUser = await setUserTimetable(currentUserId, timetable);
 
-    setCurrentUser({ ...updatedUserData, timetable: updatedTimetable });
+    setCurrentUser({
+      ...updatedUser,
+      preferences: JSON.parse(updatedUser.preferencesJson),
+    });
   };
 
   const handleNavigate = (
@@ -82,24 +92,29 @@ export default function Home() {
   };
 
   return (
-    currentUser && (
-      <div className="min-h-screen">
-        <Navigation
-          currentUser={currentUser}
-          currentPage={currentPage}
-          onLogout={handleLogout}
-          onNavigate={handleNavigate}
-        />
-        {currentPage === "dashboard" && (
-          <Dashboard currentUser={currentUser} onNavigate={handleNavigate} />
-        )}
-        {currentPage === "matching" && (
-          <Matching currentUser={currentUser} onNavigate={handleNavigate} />
-        )}
-        {currentPage === "profile" && (
-          <Profile currentUser={currentUser} onUpdateUser={handleUpdateUser} />
-        )}
-      </div>
-    )
+    <QueryClientProvider client={queryClient}>
+      {currentUser && (
+        <div className="min-h-screen">
+          <Navigation
+            currentUser={currentUser}
+            currentPage={currentPage}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+          />
+          {currentPage === "dashboard" && (
+            <Dashboard currentUser={currentUser} onNavigate={handleNavigate} />
+          )}
+          {currentPage === "matching" && (
+            <Matching currentUser={currentUser} onNavigate={handleNavigate} />
+          )}
+          {currentPage === "profile" && (
+            <Profile
+              currentUser={currentUser}
+              onUpdateUser={handleUpdateUser}
+            />
+          )}
+        </div>
+      )}
+    </QueryClientProvider>
   );
 }

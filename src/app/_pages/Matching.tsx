@@ -12,12 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import MatchingCard from "@/components/MatchingCard";
 import { User, MatchRequest, FreeTimeSlot, MatchResult } from "@/types";
-import {
-  generateSampleUsers,
-  generateMatches,
-  dayToString,
-  timeToString,
-} from "@/lib/timetable";
+import { generateMatches, dayToString, timeToString } from "@/lib/timetable";
 import {
   Users,
   Search,
@@ -30,6 +25,7 @@ import {
 import {
   getMatchRequestsFromUserId,
   getMatchRequestsToUserId,
+  getUsersExceptUserId,
 } from "@/actions";
 
 interface MatchingProps {
@@ -38,7 +34,7 @@ interface MatchingProps {
 }
 
 export default function Matching({ currentUser, onNavigate }: MatchingProps) {
-  const [sampleUsers] = useState(() => generateSampleUsers());
+  const [users, setUsers] = useState<User[]>([]);
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [matchRequests, setMatchRequests] = useState<MatchRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,11 +48,26 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   const [sendedRequests, setSendedRequests] = useState<MatchRequest[]>([]);
 
   useEffect(() => {
-    if (currentUser.timetable.length > 0) {
-      const matchResults = generateMatches(currentUser, sampleUsers);
+    const getUsers = async () => {
+      const usersResponse = await getUsersExceptUserId(currentUser.id);
+
+      setUsers(
+        usersResponse.map((v) => ({
+          ...v,
+          preferences: JSON.parse(v.preferencesJson),
+        }))
+      );
+    };
+
+    getUsers();
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser && currentUser.timetable.length > 0) {
+      const matchResults = generateMatches(currentUser, users);
       setMatches(matchResults);
     }
-  }, [currentUser, sampleUsers]);
+  }, [currentUser, users]);
 
   const filteredMatches = matches.filter(
     (match) =>
@@ -105,7 +116,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
   useEffect(() => {
     const getMatchRequestsToMe = async () => {
       const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
-      console.log("matchReqestTomMe:", matchRequestsToMe);
+      console.log("matchReqestToMe:", matchRequestsToMe);
       setReceivedRequests(
         matchRequestsToMe.map((v) => ({
           ...v,
@@ -118,7 +129,7 @@ export default function Matching({ currentUser, onNavigate }: MatchingProps) {
       const matchRequestsToMe = await getMatchRequestsFromUserId(
         currentUser.id
       );
-      console.log("matchReqestTomMe:", matchRequestsToMe);
+      console.log("matchReqestByMe:", matchRequestsToMe);
       setSendedRequests(
         matchRequestsToMe.map((v) => ({
           ...v,
