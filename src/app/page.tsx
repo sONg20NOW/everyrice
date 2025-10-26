@@ -8,7 +8,12 @@ import Profile from "./_pages/Profile";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
-import { getTimetableByUserId } from "@/actions";
+import {
+  getTimetableByUserId,
+  getUserById,
+  setUserTimetable,
+  updateUserProfile,
+} from "@/actions";
 
 export default function Home() {
   const router = useRouter();
@@ -20,17 +25,19 @@ export default function Home() {
 
   // 로컬 스토리지에서 사용자 정보 복원
   useEffect(() => {
+    const currentUserId = Number(localStorage.getItem("userId"));
+
     const handleCome = async () => {
-      if (localStorage.getItem("user")) {
-        const savedUser = JSON.parse(localStorage.getItem("user")!);
+      if (currentUserId) {
+        const savedUser = await getUserById(Number(currentUserId));
         setCurrentUser({
           ...savedUser,
           preferences: JSON.parse(savedUser.preferencesJson),
           timetable: await getTimetableByUserId(savedUser.id),
         });
       } else {
-        toast.error("로그인이 필요합니다.");
         router.push("/login");
+        alert("로그인이 필요합니다.");
       }
     };
 
@@ -38,15 +45,25 @@ export default function Home() {
   }, [router]);
 
   const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
     router.push("/login");
     toast.success("로그아웃되었습니다!");
   };
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setCurrentUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+  const handleUpdateUser = async (updates: User) => {
+    const currentUserId = Number(localStorage.getItem("userId"));
+
+    if (!currentUserId) {
+      toast.error("유저 정보를 찾지 못해 유저 업데이트에 실패했습니다.");
+
+      return;
+    }
+    const { id: userId, timetable, ...userData } = updates;
+
+    const updatedUserData = await updateUserProfile(currentUserId, userData);
+    const updatedTimetable = await setUserTimetable(currentUserId, timetable);
+
+    setCurrentUser({ ...updatedUserData, timetable: updatedTimetable });
   };
 
   const handleNavigate = (

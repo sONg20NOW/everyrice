@@ -33,7 +33,6 @@ interface FormValues {
 // }
 
 export default function LoginPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
 
   // useForm 훅 초기화 및 defaultValues 설정 (중요!)
@@ -53,15 +52,8 @@ export default function LoginPage() {
   //   }
   // }, [router]);
 
-  // 사용자 정보 변경 시 로컬 스토리지에 저장
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("user", JSON.stringify(currentUser));
-    }
-  }, [currentUser]);
-
   const handleLogin = (user: User) => {
-    setCurrentUser(user);
+    localStorage.setItem("userId", user.id.toString());
     toast.success(`환영합니다, ${user.name}님!`);
     router.push("/");
   };

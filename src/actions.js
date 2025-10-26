@@ -227,3 +227,74 @@ export async function getMatchRequestsFromUserId(userId) {
     );
   }
 }
+
+/**
+ * 1. timetable을 제외한 사용자 기본 정보를 업데이트합니다.
+ * @param {number} userId - 업데이트할 사용자의 ID
+ * @param {object} updates - name, bio, preferences 등 timetable을 제외한 일반 필드
+ * @returns {Promise<object>} 업데이트된 User 객체
+ */
+export async function updateUserProfile(userId, updates) {
+  // timetable 관계 필드가 updates에 포함되어 있을 경우를 대비하여 명시적으로 제거합니다.
+  const { timetable, preferences, ...dataToUpdate } = updates;
+
+  // JSON 문자열로 저장해야 하는 preferences 필드 처리
+  if (preferences) {
+    dataToUpdate.preferencesJson = JSON.stringify(preferences);
+  }
+
+  // Prisma update 호출 (timetable 관계 필드는 data에 포함되지 않으므로 건드리지 않음)
+  const updatedUser = await db.user.update({
+    where: { id: userId },
+    data: { ...dataToUpdate },
+  });
+
+  return updatedUser;
+}
+
+/**
+ * 2. 기존 TimeSlot을 모두 삭제하고, 받은 새 리스트로 덮어씁니다.
+ * @param {number} userId - 시간표를 업데이트할 사용자의 ID
+ * @param {Array<object>} newTimetable - 새로 덮어쓸 TimeSlot 객체 리스트 (id 필드는 제외)
+ * @returns {Promise<object>} 업데이트된 User 객체
+ */
+export async function setUserTimetable(userId, newTimetable) {
+  if (!Array.isArray(newTimetable)) {
+    throw new Error("Timetable must be an array.");
+  }
+
+  // 1. 새 TimeSlot 생성 데이터를 준비합니다.
+  const createData = newTimetable.map((slot) => ({
+    // TimeSlot 모델에 직접 연결된 필드만 사용 (userId는 여기서 제외되어야 함)
+    subject: slot.subject,
+    location: slot.location,
+    professor: slot.professor,
+    day: slot.day,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+  }));
+
+  // 2. 트랜잭션을 사용하여 원자적으로 '삭제' 후 '생성' 작업을 실행합니다.
+  const result = await db.$transaction([
+    // A. 기존 사용자 TimeSlot 레코드 모두 삭제 (Foreign Key 제약 조건 위반 없이 삭제 가능)
+    db.timeSlot.deleteMany({
+      where: { userId: userId },
+    }),
+
+    // B. 새로운 TimeSlot 레코드들을 생성 (userId를 수동으로 연결)
+    db.timeSlot.createMany({
+      data: createData.map((data) => ({
+        ...data,
+        userId: userId, // ⭐️ createMany에서는 userId를 수동으로 명시해야 합니다.
+      })),
+    }),
+  ]);
+
+  // 3. 업데이트된 User 객체를 반환합니다. (데이터가 DB에 덮어쓰기 되었으므로 User 객체를 다시 가져옴)
+  const updatedUser = await db.user.findUnique({
+    where: { id: userId },
+    include: { timetable: true }, // 시간표가 포함된 사용자 객체 반환
+  });
+
+  return updatedUser;
+}
