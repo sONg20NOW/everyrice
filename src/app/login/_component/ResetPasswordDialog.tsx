@@ -1,4 +1,4 @@
-import { createUser, getUserByEmail } from "@/actions";
+import { getUserByEmail } from "@/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,16 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { User } from "@/types";
 import { useCallback, useState } from "react";
-import { useForm, Controller } from "react-hook-form"; // Controller 추가 임포트
+import { useForm } from "react-hook-form"; // Controller 추가 임포트
 import { toast } from "sonner";
 
 import emailjs from "@emailjs/browser";

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,8 @@ import {
   getUserById,
   getUsersExceptUserId,
 } from "@/actions";
+import { CalculateTime } from "@/lib/calculateTime";
+import MatchingDialog from "@/components/MatchingDialog";
 
 interface MealType {
   type: string;
@@ -84,20 +86,20 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
     getUsers();
   }, [currentUser]);
 
-  useEffect(() => {
-    const getMatchRequests = async () => {
-      const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
-      console.log("matchReqestToMe:", matchRequestsToMe);
-      setMatchRequests(
-        matchRequestsToMe.map((v) => ({
-          ...v,
-          proposedTime: JSON.parse(v.proposedTimeJson),
-        }))
-      );
-    };
+  const getMatchRequests = useCallback(async () => {
+    const matchRequestsToMe = await getMatchRequestsToUserId(currentUser.id);
+    console.log("matchReqestToMe:", matchRequestsToMe);
+    setMatchRequests(
+      matchRequestsToMe.map((v) => ({
+        ...v,
+        proposedTime: JSON.parse(v.proposedTimeJson),
+      }))
+    );
+  }, [currentUser.id]);
 
+  useEffect(() => {
     getMatchRequests();
-  }, [currentUser]);
+  }, [getMatchRequests]);
 
   const freeTime = calculateFreeTime(currentUser.timetable ?? []);
   const totalFreeHours = freeTime.reduce(
@@ -324,40 +326,45 @@ export default function Dashboard({ currentUser, onNavigate }: DashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {matchRequests.slice(0, 2).map((request) => {
-                  const fromUser = request.fromUser;
-                  return (
-                    <div key={request.id} className="bg-blue-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-medium text-sm">
-                              {fromUser?.name}
-                            </span>
-                            <Badge variant="secondary" className="text-xs">
-                              {fromUser?.department}
-                            </Badge>
+                {matchRequests
+                  .filter((match) => match.status === "PENDING")
+                  .slice(0, 2)
+                  .map((request) => {
+                    const fromUser = request.fromUser;
+                    return (
+                      <div
+                        key={request.id}
+                        className="bg-blue-50 p-3 rounded-lg"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="font-medium text-sm">
+                                {fromUser?.name}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">
+                                {fromUser?.department}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-600">
+                              {
+                                ["월", "화", "수", "목", "금"][
+                                  request.proposedTime.day
+                                ]
+                              }
+                              요일{" "}
+                              {CalculateTime(request.proposedTime.startTime)} -{" "}
+                              {CalculateTime(request.proposedTime.endTime)}
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-600">
-                            {
-                              ["월", "화", "수", "목", "금"][
-                                request.proposedTime.day
-                              ]
-                            }
-                            요일 {request.proposedTime.startTime}:00 -{" "}
-                            {request.proposedTime.endTime}:00
-                          </p>
+                          <MatchingDialog
+                            match={request}
+                            refresh={getMatchRequests}
+                          />
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => onNavigate("matching")}
-                        >
-                          응답하기
-                        </Button>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
