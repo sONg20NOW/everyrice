@@ -277,7 +277,7 @@ export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
               <div className="flex-1">
                 {isEditingProfile ? (
                   <div className="space-y-3">
-                    <div>
+                    <div className="grid gap-1">
                       <Label htmlFor="name">이름</Label>
                       <Input
                         id="name"
@@ -290,7 +290,7 @@ export default function Profile({ currentUser, onUpdateUser }: ProfileProps) {
                         }
                       />
                     </div>
-                    <div>
+                    <div className="grid gap-1">
                       <Label htmlFor="bio">자기소개</Label>
                       <Textarea
                         id="bio"
